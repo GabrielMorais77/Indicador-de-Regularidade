@@ -1,0 +1,1881 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Indicador de Regularidade Cadastral</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: #f1f5f9;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.10); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script id="app-bundle" type="text/plain">
+/* prelude */
+const w = window;
+const React = w.React;
+const Recharts = w.Recharts;
+const createRoot = w.createRoot;
+// Provide a typed useState so generic calls like useState<number>(...) compile
+const useState = React.useState;
+const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList, Cell } = Recharts;
+/* end prelude */
+/* ===== types.ts ===== */
+var Status;
+(function (Status) {
+    Status["VALIDADO"] = "Validado";
+    Status["NAO_VALIDADO"] = "N\u00E3o Validado";
+})(Status || (Status = {}));
+var ClubStatus;
+(function (ClubStatus) {
+    ClubStatus["REGULAR"] = "Regular";
+    ClubStatus["IRREGULAR"] = "Irregular";
+})(ClubStatus || (ClubStatus = {}));
+/* ===== constants.ts ===== */
+// DATA FOR GOVERNANCE INSTITUTIONAL TAB
+const GOVERNANCE_TABLE_DATA = [
+    {
+        indicator: "1. Regularidade Fiscal, Trabalhista e Cadastral",
+        subIndicator: "(Certidões Obrigatórias)",
+        objective: "Garantir a manutenção da regularidade do Clube junto ao Ministério do Esporte e aos órgãos fiscais e trabalhistas, conforme boas práticas de governança recomendadas pelo TCU, e como medida condicionante à continuidade dos projetos, ao repasse de parcelas de recursos e à concessão de bonificações.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso II",
+            "RD 05-A/2025 – Arts. 11 e 12, incisos e parágrafos"
+        ],
+        actions: [
+            "Apresentação de Certidões Obrigatórias"
+        ]
+    },
+    {
+        indicator: "2. Participação em Capacitações Técnicas",
+        subIndicator: "(Fórum do CI, Seminário Nacional e CBC & Clubes EXPO)",
+        objective: "Garantir a participação em eventos obrigatórios de capacitação técnica, assegurando a qualificação dos gestores e aderência plena ao PFA e aos seus eixos de formação.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso III",
+            "RD 05-A/2025 – Art. 19 e parágrafos"
+        ],
+        actions: [
+            "Fórum de Presidentes de Clubes do Conselho Interclubes – CI e/ou Seminário Nacional de Formação Esportiva",
+            "Seminário Nacional de Formação Esportiva",
+            "CBC & Clubes EXPO"
+        ]
+    },
+    {
+        indicator: "3. Eficiência na Gestão de Recursos Lotéricos",
+        subIndicator: "(Cumprimento de Normas e Fluxos nos Eixos ETM e MEE)",
+        objective: "Garantir o atendimento às normas de execução, controle e prestação de contas dos projetos apoiados com recursos lotéricos, com conformidade e transparência, dentro dos padrões estabelecidos pelo CBC, como medida condicionante à continuidade dos projetos, ao repasse de parcelas de recursos e à concessão de bonificações.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso I",
+            "RD 05-A/2025 – Arts. 13 e 14, incisos e parágrafo"
+        ],
+        actions: [
+            "Apresentação tempestiva de extratos bancários",
+            "Apresentação tempestiva de comprovantes de liquidação",
+            "Custeio de despesa validada",
+            "Transparência dos investimentos",
+            "Continuidade de Esporte com investimento",
+            "Atualização da Relação de Atletas Beneficiados",
+            "Participação em Oficinas de Capacitação Técnica dos Eixos",
+            "Apresentação tempestiva do Relatório de Execução Física",
+            "Apresentação tempestiva dos documentos das aquisições",
+            "Apresentação de orçamentos válidos na Pesquisa de Mercado",
+            "Conformidade no recebimento dos itens conforme pactuado e com identificação do Selo do CBC",
+            "Apresentação tempestiva da Prestação de Contas"
+        ]
+    },
+    {
+        indicator: "4. Disponibilidade dos Recursos",
+        subIndicator: "(Bloqueio Judicial)",
+        objective: "Garantir a manutenção dos recursos lotéricos nas contas dos projetos, para que sejam aplicados exclusivamente nas finalidades para as quais se destinam, promovendo a devolução tempestiva de valores no caso da ocorrência de bloqueio judicial.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso IV",
+            "RD 05-A/2025 – Art. 15 e parágrafos"
+        ],
+        actions: [
+            "Disponibilidade dos Recursos"
+        ]
+    },
+    {
+        indicator: "5. Transparência Ativa no CBC & Clubes EXPO",
+        subIndicator: "(Benefícios e Resultados do Clube no PFA)",
+        objective: "Garantir a divulgação dos beneficios recebidos no âmbito do PFA e resultados alcançados perante a comunidade esportiva, society em geral e órgãos de controle, inclusive com a obrigatoriedade de distribuição de folder, além de outros meios viáveis.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso V",
+            "RD 05-A/2025 – Art. 20 e parágrafos"
+        ],
+        actions: [
+            "Distribuição de Folders"
+        ]
+    },
+    {
+        indicator: "6. Adimplência Contratual",
+        subIndicator: "(Estande no CBC & Clubes EXPO)",
+        objective: "Garantir o cumprimento das obrigações contratuais assumidas pelo Clube no CBC & Clubes EXPO, assegurando responsabilidade financeira e institucional, em face da bonificação recebida nos Eixos MEE e/ou ETM do PFA.",
+        legalBasis: [
+            "RD 05-A/2025 – Art. 10, inciso VI",
+            "RD 05-A/2025 – Art. 21, inciso II, § 2º"
+        ],
+        actions: [
+            "Adimplência Contrato de Adesão ao Estande no CBC & Clubes EXPO com Terceiros"
+        ]
+    },
+    {
+        indicator: "7. Adimplência de Contribuição",
+        subIndicator: "(Associativa junto ao CBC)",
+        objective: "Garantir o cumprimento das obrigações relativas à contribuição associativa, assegurando regularidade institucional em respeito ao Estatuto Social do CBC.",
+        legalBasis: [
+            "Estatuto do CBC – Art. 7º, inciso II",
+            "RD 05-A/2025 – Art. 10, inciso VII",
+            "RD 05-A/2025 – Art. 21, inciso I, § 1º"
+        ],
+        actions: [
+            "Adimplência de Contribuição Associativa junto ao CBC"
+        ]
+    }
+];
+// INDICATOR 2 DATA (Now mapped as Indicator 1 in UI)
+const CERTIFICATE_DATA = [
+    {
+        id: 1,
+        action: "Certidão de Regularidade do FGTS - CRF",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.NAO_VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 2,
+        action: "Certidão Conjunta Negativa de Débitos - CND Conjunta",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.NAO_VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 3,
+        action: "Certidão Negativa de Débitos Trabalhistas - CNDT",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.VALIDADO,
+        status2027: Status.NAO_VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 4,
+        action: "Cadastro de Entidades Privadas Sem Fins Lucrativos Impedidas - CEPIN",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 5,
+        action: "Certidão de Quitação de Tributos Estaduais - CQTE",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.VALIDADO,
+        status2027: Status.NAO_VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 6,
+        action: "Certidão de Quitação de Tributos Municipais - COTM",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.NAO_VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 7,
+        action: "Cadastro Informativo de Créditos não Quitados do Setor Público Federal - CADIN",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    },
+    {
+        id: 8,
+        action: "Certidão de Registro Cadastral - CRC",
+        frequency: "Anual",
+        methodology: "Índice: Apresentação dentro do prazo definido pelo CBC recebe um \"Validado\", caso contrario \"Não Validado\"\nApuração: Anual no prazo definido, até o final do ciclo",
+        status2026: Status.NAO_VALIDADO,
+        status2027: Status.VALIDADO,
+        status2028: Status.VALIDADO,
+    }
+];
+const YEAR_SUMMARIES = [
+    {
+        year: "2026",
+        clubStatus: ClubStatus.IRREGULAR,
+        validado: 4,
+        naoValidado: 4
+    },
+    {
+        year: "2027",
+        clubStatus: ClubStatus.REGULAR,
+        validado: 6,
+        naoValidado: 2
+    },
+    {
+        year: "2028",
+        clubStatus: ClubStatus.REGULAR,
+        validado: 8,
+        naoValidado: 0
+    }
+];
+// Helpers for Indicator 1 Data Generation
+const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const quarters = ["1º Trim", "2º Trim", "3º Trim", "4º Trim"];
+const semesters = ["1º Sem", "2º Sem"];
+const generatePeriods = (labels, status) => {
+    return labels.map(label => ({ period: label, status }));
+};
+const generateMixed = (labels, failIndex) => {
+    return labels.map((label, idx) => ({
+        period: label,
+        status: idx === failIndex || idx === failIndex + 1 ? 'NAO_ENTREGUE' : 'OK'
+    }));
+};
+// INDICATOR 1 DATA (Now mapped as Indicator 3 in UI)
+const INDICATOR1_DATA = [
+    {
+        id: 1,
+        action: "Apresentação tempestiva de extratos bancários",
+        verification: "Mensal",
+        methodology: "Índice: Nº de extratos entregues dentro do prazo dividido pelo total de extratos do período.\nApuração: Mensal, acumulado por ano.",
+        weight: 15,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generateMixed(months, 3) },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 2,
+        action: "Apresentação tempestiva de comprovantes de liquidação",
+        verification: "Mensal",
+        methodology: "Índice: Nº de comprovantes entregues dentro do prazo dividido pelo total de comprovantes entregues no período.",
+        weight: 15,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generateMixed(months, 6) },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 3,
+        action: "Custeio de despesa validada",
+        verification: "Trimestral",
+        methodology: "Índice: Nº de trimestre com despesas não validadas dividido pelo total de trimestre no período.",
+        weight: 5,
+        data: {
+            2026: { periods: generatePeriods(quarters, 'OK') },
+            2027: { periods: generateMixed(quarters, 1) },
+            2028: { periods: generatePeriods(quarters, 'OK') }
+        }
+    },
+    {
+        id: 4,
+        action: "Transparência dos investimentos",
+        verification: "Semestral",
+        methodology: "Índice: Nº de semestres com validação de transparência deduzido do nº de validação com irregularidades.",
+        weight: 10,
+        data: {
+            2026: { periods: generatePeriods(semesters, 'OK') },
+            2027: { periods: generatePeriods(semesters, 'OK') },
+            2028: { periods: generatePeriods(semesters, 'OK') }
+        }
+    },
+    {
+        id: 5,
+        action: "Continuidade de Esporte com investimento",
+        verification: "Mensal",
+        methodology: "Índice: Nº de esportes implementados no período menos o nº de esportes descontinuados.",
+        weight: 10,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generateMixed(months, 9) },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 6,
+        action: "Atualização da Relação de Atletas Beneficiados",
+        verification: "Anual",
+        methodology: "Índice: Nº de atualizações realizadas dentro do prazo determinado dividido pelo total.",
+        weight: 5,
+        data: {
+            2026: { periods: [{ period: "Lista Anual", status: 'OK' }] },
+            2027: { periods: [{ period: "Lista Anual", status: 'ATRASO' }] },
+            2028: { periods: [{ period: "Lista Anual", status: 'OK' }] }
+        }
+    },
+    {
+        id: 7,
+        action: "Participação em Oficinas de Capacitação Técnica dos Eixos",
+        verification: "Anual",
+        methodology: "Índice: Nº de atualizações realizadas no prazo determinado pelo total de atualizações.",
+        weight: 5,
+        data: {
+            2026: { periods: [{ period: "Oficina Anual", status: 'OK' }] },
+            2027: { periods: [{ period: "Oficina Anual", status: 'NAO_ENTREGUE' }] },
+            2028: { periods: [{ period: "Oficina Anual", status: 'OK' }] }
+        }
+    },
+    {
+        id: 8,
+        action: "Apresentação tempestiva do Relatório de Execução Física",
+        verification: "Anual",
+        methodology: "Índice: Nº de entregas realizadas no prazo determinado pelo total de entregas no período.",
+        weight: 5,
+        data: {
+            2026: { periods: [{ period: "Relatório Anual", status: 'OK' }] },
+            2027: { periods: [{ period: "Relatório Anual", status: 'OK' }] },
+            2028: { periods: [{ period: "Relatório Anual", status: 'OK' }] }
+        }
+    },
+    {
+        id: 9,
+        action: "Apresentação tempestiva dos documentos das aquisições",
+        verification: "Mensal",
+        methodology: "Índice: Nº de entregas realizadas no prazo determinado pelo total de entregas no período.",
+        weight: 10,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generatePeriods(months, 'OK') },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 10,
+        action: "Apresentação de orçamentos válidos na Pesquisa de Mercado",
+        verification: "Mensal",
+        methodology: "Índice: Nº de orçamentos válidos entregues no prazo determinado pelo total de orçamentos.",
+        weight: 10,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generatePeriods(months, 'OK') },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 11,
+        action: "Conformidades nos itens recebidos",
+        verification: "Mensal",
+        methodology: "Índice: Nº de itens com conformidade recebidos no prazo determinado pelo total de itens.",
+        weight: 5,
+        data: {
+            2026: { periods: generatePeriods(months, 'OK') },
+            2027: { periods: generatePeriods(months, 'OK') },
+            2028: { periods: generatePeriods(months, 'OK') }
+        }
+    },
+    {
+        id: 12,
+        action: "Apresentação tempestiva da Prestação de Contas",
+        verification: "Final do Ciclo",
+        methodology: "Índice: Relatório entregue dentro do prazo determinado\nApuração: Final do Ciclo.",
+        weight: 5,
+        data: {
+            2026: { periods: [{ period: "PC Final", status: 'PENDENTE' }] },
+            2027: { periods: [{ period: "PC Final", status: 'PENDENTE' }] },
+            2028: { periods: [{ period: "PC Final", status: 'OK' }] }
+        }
+    }
+];
+// INDICATOR 3 DATA (Now mapped as Indicator 2 in UI)
+const INDICATOR3_DATA = [
+    {
+        id: 1,
+        action: "Fórum de Presidentes de Clubes do Conselho Interclubes – CI e/ou Seminário Nacional de Formação Esportiva",
+        verification: "Anual",
+        methodology: "Índice: Presença do Presidente em pelo menos um dos eventos recebe \"Sim\", ausência \"Não\"\nApuração: Anual na data dos eventos, até the final do ciclo",
+        status2026: true, status2027: true, status2028: true
+    },
+    {
+        id: 2,
+        action: "Seminário Nacional de Formação Esportiva",
+        verification: "Anual",
+        methodology: "Índice: Presença do Técnico Estratégico em todas as plenárias do evento recebe \"Sim\", ausência \"Não\"\nApuração: Anual na data dos eventos, até o final do ciclo",
+        status2026: true, status2027: false, status2028: true
+    },
+    {
+        id: 3,
+        action: "CBC & Clubes EXPO",
+        verification: "Anual",
+        methodology: "Índice: Participação do Clube no evento, com Estande ou Espaço Vitrine recebe \"Sim\", ausência \"Não\"\nApuração: Anual na data dos eventos, até o final do ciclo",
+        status2026: true, status2027: true, status2028: true
+    }
+];
+// INDICATOR 4 DATA
+const INDICATOR4_DATA = [
+    {
+        id: 1,
+        action: "Devolução tempestiva dos recursos bloqueados judicialmente nas contas de projeto",
+        verification: "Mensal",
+        methodology: "Índice: Nº de meses do período menos o nº de meses com Bloqueio Judicial com devolução dos recursos com mais de 30 dias divididos pelo total de e meses do período\nApuração: Mensal, acumulado por ano até ao final do ciclo/projeto",
+        status2026: true, status2027: true, status2028: true
+    }
+];
+// INDICATOR 5 DATA
+const INDICATOR5_DATA = [
+    {
+        id: 1,
+        action: "Distribuição de Folder no evento CBC & Clubes EXPO (com dados do Clube no âmbito do PFA)",
+        verification: "Anual",
+        methodology: "Índice: Verificação \"In Loco\" e comprovação com imagem aportada no sistema recebe \"Sim\", ausência \"Não\"\nApuração: Anual na data dos eventos, até o final do ciclo",
+        status2026: true, status2027: true, status2028: true
+    }
+];
+// INDICATOR 6 DATA
+const INDICATOR6_DATA = [
+    {
+        id: 1,
+        action: "Adimplência Contrato de Adesão ao Estande no CBC & Clubes EXPO com Terceiros",
+        verification: "Mensal",
+        methodology: "Índice: Nº de parcelas pagas dentro do prazo dividido pelo total de parcelas do período.\nApuração: Mensal, acumulado por ano até ao final do ciclo/projeto",
+        percent2026: 75, percent2027: 63, percent2028: 100
+    }
+];
+// INDICATOR 7 DATA
+const INDICATOR7_DATA = [
+    {
+        id: 1,
+        action: "Adimplência de Contribuição Associativa junto ao CBC",
+        verification: "Mensal",
+        methodology: "Índice: Nº de mensalidades pagas dentro do prazo dividido pelo total de mensalidades do período.\nApuração: Mensal, acumulado por ano até ao final do ciclo/projeto",
+        percent2026: 50, percent2027: 83, percent2028: 100
+    }
+];
+// OVERALL SUMMARY
+const OVERALL_SUMMARIES = [
+    {
+        year: "2026",
+        ind1Score: 100,
+        ind1Status: ClubStatus.REGULAR,
+        ind2Status: ClubStatus.IRREGULAR,
+        ind3Count: 3,
+        ind3Status: ClubStatus.REGULAR,
+        ind4Status: ClubStatus.REGULAR,
+        ind5Status: ClubStatus.REGULAR,
+        ind6Score: 75,
+        ind6Status: ClubStatus.REGULAR,
+        ind7Score: 50,
+        ind7Status: ClubStatus.IRREGULAR
+    },
+    {
+        year: "2027",
+        ind1Score: 65,
+        ind1Status: ClubStatus.IRREGULAR,
+        ind2Status: ClubStatus.REGULAR,
+        ind3Count: 2,
+        ind3Status: ClubStatus.IRREGULAR,
+        ind4Status: ClubStatus.REGULAR,
+        ind5Status: ClubStatus.REGULAR,
+        ind6Score: 63,
+        ind6Status: ClubStatus.IRREGULAR,
+        ind7Score: 83,
+        ind7Status: ClubStatus.REGULAR
+    },
+    {
+        year: "2028",
+        ind1Score: 95,
+        ind1Status: ClubStatus.REGULAR,
+        ind2Status: ClubStatus.REGULAR,
+        ind3Count: 3,
+        ind3Status: ClubStatus.REGULAR,
+        ind4Status: ClubStatus.REGULAR,
+        ind5Status: ClubStatus.REGULAR,
+        ind6Score: 100,
+        ind6Status: ClubStatus.REGULAR,
+        ind7Score: 100,
+        ind7Status: ClubStatus.REGULAR
+    }
+];
+// NEW DATA FOR MARCOS RD05-A
+const generateOccurrences = (labels, max) => labels.map(l => ({ period: l, count: Math.floor(Math.random() * max) }));
+const MARCOS_RD05A_DATA = [
+    {
+        title: "I. Bloqueio da Plataforma Digital",
+        rows: [
+            { cause: "Apresentação de orçamentos inválidos na Pesquisa de Mercado" },
+            { cause: "Apresentação intempestiva da Prestação de Contas" },
+            { cause: "Apresentação intempestiva de comprovantes de liquidação" },
+            { cause: "Apresentação intempestiva de extratos bancários" },
+            { cause: "Apresentação intempestiva do Relatório de Execução Física" },
+            { cause: "Apresentação intempestiva dos documentos das aquisições" },
+            { cause: "Bloqueio da Plataforma Digital" },
+            { cause: "Bloqueios Judiciais nas contas dos projetos" },
+            { cause: "Desatualização da Relação de Atletas Beneficiados" },
+            { cause: "Desconformidades nos itens recebidos" },
+            { cause: "Descontinuidade de Esporte com investimento" },
+            { cause: "Descumprimento de prazos para apresentação de dados, relatórios, ou demais documentos vinculados à participação no CBI®" },
+            { cause: "Descumprimento injustificado ou reincidente de obrigações" },
+            { cause: "Despesa invalidada" },
+            { cause: "Falta de Transparência dos investimentos" },
+            { cause: "Falta de atualização cadastral na Plataforma Comitê Digital" },
+            { cause: "Inadimplemento relativo a compromissos obrigatórios junto ao CBC e terceiros para a participação no evento CBC & Clubes EXPO" },
+            { cause: "Inadimplemento relativo a contribuições associativas" },
+            { cause: "Não atendimento de diligências técnicas, administrativas ou contábeis, dentro dos prazos estabelecidos" },
+            { cause: "Não participação em Oficinas de Capacitação Técnica dos Eixos" },
+            { cause: "Outras condutas que comprometam o acompanhamento do projeto" },
+            { cause: "Pendências relacionadas ao acompanhamento de Termos de Execução vigentes" },
+            { cause: "Reiteradas condutas omissas quanto à inserção de informações obrigatórias, ao aporte de documentos" }
+        ].map((r, i) => ({
+            id: i + 1,
+            cause: r.cause,
+            data: {
+                2026: generateOccurrences(months, 3),
+                2027: generateOccurrences(months, 2),
+                2028: generateOccurrences(months, 1)
+            }
+        })).sort((a, b) => a.cause.localeCompare(b.cause))
+    },
+    {
+        title: "II. Status de Categoria de Integração",
+        rows: [
+            { cause: "A constatação de impropriedades relevantes" },
+            { cause: "A constatação de irregularidades na gestão dos recursos Lotéricos" },
+            { cause: "Ausência de obtenção de medalhas no Quadro Geral de Medalhas – QGM" },
+            { cause: "Bloqueio da Plataforma Digital" },
+            { cause: "Bloqueios Judiciais nas contas dos projetos" },
+            { cause: "Descumprimento injustificado ou reincidente de obrigações" },
+            { cause: "Inadimplemento relativo a compromissos obrigatórios junto ao CBC e terceiros para a participação no evento CBC & Clubes EXPO" },
+            { cause: "Inadimplemento relativo a contribuições associativas" },
+            { cause: "Não divulgação dos benefícios obtidos pelo Clube no âmbito do PFA e resultados esportivos alcançados a partir dos investimentos" },
+            { cause: "Não participação de oficinas de capacitação nos eixos ETM e MEE" },
+            { cause: "Não participação em eventos obrigatórios de capacitação técnica" },
+            { cause: "Não renovação de certidões obrigatórias" }
+        ].map((r, i) => ({
+            id: i + 100,
+            cause: r.cause,
+            data: {
+                2026: generateOccurrences(months, 2),
+                2027: generateOccurrences(months, 1),
+                2028: generateOccurrences(months, 0)
+            }
+        })).sort((a, b) => a.cause.localeCompare(b.cause))
+    },
+    {
+        title: "III. Suspensão da Execução dos Projetos",
+        rows: [
+            { cause: "Apresentação de orçamentos válidos na Pesquisa de Mercado" },
+            { cause: "Apresentação intempestiva da Prestação de Contas" },
+            { cause: "Apresentação intempestiva de comprovantes de liquidação" },
+            { cause: "Apresentação intempestiva de extratos bancários" },
+            { cause: "Apresentação intempestiva do Relatório de Execução Física" },
+            { cause: "Apresentação intempestiva dos documentos das aquisições" },
+            { cause: "Bloqueios Judiciais nas contas dos projetos" },
+            { cause: "Desatualização da Relação de Atletas Beneficiados" },
+            { cause: "Desconformidades nos itens recebidos" },
+            { cause: "Descontinuidade de Esporte com investimento" },
+            { cause: "Descumprimento injustificado ou reincidente de obrigações" },
+            { cause: "Despesa invalidada" },
+            { cause: "Falta de Transparência dos investimentos" },
+            { cause: "Inadimplemento relativo a compromissos obrigatórios junto ao CBC e terceiros para a participação no evento CBC & Clubes EXPO" },
+            { cause: "Inadimplemento relativo a contribuições associativas" },
+            { cause: "Não participação em Oficinas de Capacitação Técnica dos Eixos" },
+            { cause: "Não renovação de certidões obrigatórias" },
+            { cause: "Outras condutas que comprometam o acompanhamento do projeto" }
+        ].map((r, i) => ({
+            id: i + 200,
+            cause: r.cause,
+            data: {
+                2026: generateOccurrences(months, 4),
+                2027: generateOccurrences(months, 2),
+                2028: generateOccurrences(months, 1)
+            }
+        })).sort((a, b) => a.cause.localeCompare(b.cause))
+    }
+];
+/* ===== components/DashboardCharts.tsx ===== */
+const DashboardCharts = () => {
+    // --- Data Preparation for Line Chart (Governance Index) ---
+    const lineChartData = OVERALL_SUMMARIES.map((yearSummary) => {
+        const indicators = [
+            yearSummary.ind1Status,
+            yearSummary.ind2Status,
+            yearSummary.ind3Status,
+            yearSummary.ind4Status,
+            yearSummary.ind5Status,
+            yearSummary.ind6Status,
+            yearSummary.ind7Status,
+        ];
+        const regularCount = indicators.filter(status => status === ClubStatus.REGULAR).length;
+        const total = indicators.length;
+        const percentage = Math.round((regularCount / total) * 100);
+        return {
+            year: yearSummary.year,
+            compliance: percentage,
+            trend: null
+        };
+    });
+    if (lineChartData.length > 0) {
+        const startVal = lineChartData[0].compliance;
+        const endVal = lineChartData[lineChartData.length - 1].compliance;
+        const steps = lineChartData.length - 1;
+        lineChartData.forEach((d, i) => {
+            d.trend = Math.round(startVal + (endVal - startVal) * (i / (steps || 1)));
+        });
+    }
+    // --- Data Preparation for Bar Chart (Status per Indicator) ---
+    // REMAPPED MAPPING:
+    // UI Label Ind 1 -> ind2Status (Cadastral)
+    // UI Label Ind 2 -> ind3Status (Capacitation)
+    // UI Label Ind 3 -> ind1Status (Management)
+    const indicatorKeys = [
+        'ind2Status', 'ind3Status', 'ind1Status', 'ind4Status', 'ind5Status', 'ind6Status', 'ind7Status'
+    ];
+    const indicatorLabels = [
+        'Ind 1', 'Ind 2', 'Ind 3', 'Ind 4', 'Ind 5', 'Ind 6', 'Ind 7'
+    ];
+    const barChartData = indicatorLabels.map((label, index) => {
+        const key = indicatorKeys[index];
+        const getValue = (yearIndex) => OVERALL_SUMMARIES[yearIndex][key] === ClubStatus.REGULAR ? 100 : -100;
+        return {
+            name: label,
+            '2026': getValue(0),
+            '2027': getValue(1),
+            '2028': getValue(2),
+        };
+    });
+    const CustomBarTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (React.createElement("div", { className: "bg-slate-800 text-white p-3 border border-slate-600 shadow-xl rounded-lg text-sm z-50" },
+                React.createElement("p", { className: "font-bold mb-2 text-slate-300 border-b border-slate-600 pb-1" }, label),
+                payload.map((entry, index) => (React.createElement("div", { key: index, className: "flex items-center gap-2 mb-1.5" },
+                    React.createElement("div", { className: "w-3 h-3 rounded-sm shadow-sm", style: { backgroundColor: entry.color } }),
+                    React.createElement("span", { className: "font-medium text-slate-300 w-10" },
+                        entry.name,
+                        ":"),
+                    React.createElement("span", { className: `font-bold ${entry.value > 0 ? 'text-green-400' : 'text-red-400'}` }, entry.value > 0 ? 'Regular' : 'Irregular'))))));
+        }
+        return null;
+    };
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8" },
+            React.createElement("h1", { className: "text-3xl md:text-4xl font-bold" }, "Painel de Governan\u00E7a"),
+            React.createElement("p", { className: "text-blue-200 text-lg" }, "Vis\u00E3o consolidada da evolu\u00E7\u00E3o dos indicadores.")),
+        React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-6" },
+            React.createElement("div", { className: "bg-blue-50 p-6 rounded-xl shadow-sm border border-blue-200 flex flex-col h-[500px]" },
+                React.createElement("div", { className: "mb-4 text-center" },
+                    React.createElement("h3", { className: "text-xl font-bold text-slate-700 uppercase tracking-wide" }, "GOVERNAN\u00C7A INSTITUCIONAL"),
+                    React.createElement("p", { className: "text-base text-slate-500 uppercase" }, "EVOLU\u00C7\u00C3O DO \u00CDNDICE")),
+                React.createElement("div", { className: "flex-1 w-full relative" },
+                    React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
+                        React.createElement(LineChart, { data: lineChartData, margin: { top: 30, right: 30, left: 30, bottom: 20 } },
+                            React.createElement(CartesianGrid, { strokeDasharray: "3 3", stroke: "#cbd5e1", vertical: false }),
+                            React.createElement(XAxis, { dataKey: "year", axisLine: { stroke: '#94a3b8' }, tickLine: false, tick: { fill: '#475569', fontSize: 18, fontWeight: 600 }, dy: 10, padding: { left: 30, right: 30 } }),
+                            React.createElement(YAxis, { hide: true, domain: [0, 120] }),
+                            React.createElement(Tooltip, { contentStyle: { borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '16px' }, formatter: (value, name) => [`${value}%`, name === 'compliance' ? 'Conformidade' : 'Tendência'] }),
+                            React.createElement(Line, { type: "monotone", dataKey: "trend", stroke: "#94a3b8", strokeWidth: 2, strokeDasharray: "10 5", dot: false, activeDot: false, name: "Tend\u00EAncia" }),
+                            React.createElement(Line, { type: "monotone", dataKey: "compliance", stroke: "#1e3a8a", strokeWidth: 4, dot: { r: 6, fill: '#1e3a8a', strokeWidth: 2, stroke: '#fff' }, activeDot: { r: 8, fill: '#1e3a8a' }, name: "Conformidade" },
+                                React.createElement(LabelList, { dataKey: "compliance", position: "top", offset: 15, formatter: (val) => `${val}%`, style: { fill: '#1e3a8a', fontWeight: 'bold', fontSize: '20px' } })))))),
+            React.createElement("div", { className: "bg-[#1f1f1f] p-6 rounded-xl shadow-lg border border-slate-700 flex flex-col h-[500px]" },
+                React.createElement("div", { className: "mb-2 text-center" },
+                    React.createElement("h3", { className: "text-xl font-medium text-slate-300 tracking-wide" }, "Indicadores Por Ano")),
+                React.createElement("div", { className: "flex-1 w-full" },
+                    React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
+                        React.createElement(BarChart, { data: barChartData, margin: { top: 40, right: 20, left: 20, bottom: 20 }, barGap: 4 },
+                            React.createElement(CartesianGrid, { strokeDasharray: "3 3", stroke: "#444", vertical: false, opacity: 0.3 }),
+                            React.createElement(XAxis, { dataKey: "name", orientation: "top", axisLine: false, tickLine: false, tick: { fill: '#e2e8f0', fontSize: 14, fontWeight: 600 }, dy: -10 }),
+                            React.createElement(YAxis, { hide: true, domain: [-120, 120] }),
+                            React.createElement(ReferenceLine, { y: 0, stroke: "#666", strokeWidth: 1 }),
+                            React.createElement(Tooltip, { content: React.createElement(CustomBarTooltip, null), cursor: { fill: 'rgba(255,255,255,0.05)' } }),
+                            React.createElement(Legend, { verticalAlign: "bottom", height: 36, iconType: "square", wrapperStyle: { color: '#ccc', paddingTop: '10px', fontSize: '14px' } }),
+                            React.createElement(Bar, { dataKey: "2026", fill: "#60a5fa", name: "2026", radius: [2, 2, 2, 2] }),
+                            React.createElement(Bar, { dataKey: "2027", fill: "#f97316", name: "2027", radius: [2, 2, 2, 2] }),
+                            React.createElement(Bar, { dataKey: "2028", fill: "#94a3b8", name: "2028", radius: [2, 2, 2, 2] }))))))));
+};
+/* ===== components/DetailedTable.tsx ===== */
+const DetailedTable_StatusBadge = ({ status }) => {
+    const isValid = status === Status.VALIDADO;
+    return (React.createElement("div", { className: `flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-base font-medium border whitespace-nowrap ${isValid
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` },
+        isValid ? (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+            React.createElement("polyline", { points: "20 6 9 17 4 12" }))) : (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+            React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+            React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" }))),
+        status));
+};
+const DetailedTable = () => {
+    return (React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-full flex flex-col" },
+        React.createElement("div", { className: "p-6 border-b border-slate-200 flex-none" },
+            React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Detalhamento por A\u00E7\u00E3o"),
+            React.createElement("p", { className: "text-base text-slate-500" }, "Lista completa das certid\u00F5es e seus status individuais por ano de refer\u00EAncia.")),
+        React.createElement("div", { className: "overflow-x-auto flex-grow" },
+            React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200 sticky top-0 z-10" },
+                    React.createElement("tr", null,
+                        React.createElement("th", { scope: "col", className: "px-6 py-4 w-[64%]" }, "CERTID\u00C3O"),
+                        React.createElement("th", { scope: "col", className: "px-2 py-4 text-center w-[12%]" }, "2026"),
+                        React.createElement("th", { scope: "col", className: "px-2 py-4 text-center w-[12%]" }, "2027"),
+                        React.createElement("th", { scope: "col", className: "px-2 py-4 text-center w-[12%]" }, "2028"))),
+                React.createElement("tbody", { className: "divide-y divide-slate-100" }, CERTIFICATE_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                    React.createElement("td", { className: "px-6 py-4" },
+                        React.createElement("div", { className: "font-bold text-lg text-slate-900" }, item.action),
+                        React.createElement("div", { className: "text-base text-slate-500 mt-1 whitespace-pre-line" }, item.methodology)),
+                    React.createElement("td", { className: "px-2 py-4" },
+                        React.createElement(DetailedTable_StatusBadge, { status: item.status2026 })),
+                    React.createElement("td", { className: "px-2 py-4" },
+                        React.createElement(DetailedTable_StatusBadge, { status: item.status2027 })),
+                    React.createElement("td", { className: "px-2 py-4" },
+                        React.createElement(DetailedTable_StatusBadge, { status: item.status2028 }))))))))));
+};
+/* ===== components/GeneralSummary.tsx ===== */
+// Icon for Regular status
+const CheckIcon = () => (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-9 h-9 text-green-500", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+    React.createElement("path", { d: "M20 6L9 17l-5-5" })));
+// Icon for Irregular status
+const XIcon = () => (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", className: "w-9 h-9 text-red-500", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
+    React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+    React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
+// Renders the appropriate icon based on the status
+const StatusIcon = ({ status }) => {
+    return status === ClubStatus.REGULAR ? React.createElement(CheckIcon, null) : React.createElement(XIcon, null);
+};
+// Tooltip for displaying indicator descriptions
+const InfoTooltip = ({ description }) => (React.createElement("div", { className: "group relative flex items-center ml-2" },
+    React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: 1.5, stroke: "currentColor", className: "w-6 h-6 text-slate-400 hover:text-blue-600 cursor-help transition-colors" },
+        React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" })),
+    React.createElement("div", { className: "absolute left-1/2 bottom-full mb-2 w-80 -translate-x-1/2 hidden group-hover:block z-50 pointer-events-none" },
+        React.createElement("div", { className: "bg-slate-800 text-white text-sm leading-relaxed rounded-lg p-4 shadow-xl relative text-left" },
+            description,
+            React.createElement("div", { className: "absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-800" })))));
+const GeneralSummary = () => {
+    const isRegular = (status) => status === ClubStatus.REGULAR;
+    // Calculates the final status for a given year based on all indicators
+    const getYearFinalStatus = (summary) => {
+        const allRegular = isRegular(summary.ind1Status) &&
+            isRegular(summary.ind2Status) &&
+            isRegular(summary.ind3Status) &&
+            isRegular(summary.ind4Status) &&
+            isRegular(summary.ind5Status) &&
+            isRegular(summary.ind6Status) &&
+            isRegular(summary.ind7Status);
+        return allRegular ? 'Regular' : 'Irregular';
+    };
+    // List of indicators with their metadata for rendering
+    const indicators = [
+        {
+            key: 'ind2Status',
+            label: '1. Regularidade Fiscal, Trabalhista e Cadastral',
+            subLabel: '(Certidões Obrigatórias)',
+            description: 'Garantir a manutenção da regularidade do Clube junto ao Ministério do Esporte e aos órgãos fiscais e trabalhistas conforme boas práticas de governança recomendadas pelo TCU e como medida condicionante à continuidade dos projetos, ao repasse de parcelas de recursos e à concessão de bonificações.'
+        },
+        {
+            key: 'ind3Status',
+            label: '2. Participação em Capacitações Técnicas',
+            subLabel: '(Fórum do CI, Seminário Nacional e CBC & Clubes EXPO)',
+            description: 'Garantir a participação em eventos obrigatórios de capacitação técnica, assegurando a qualificação dos gestores e aderência plena ao PFA e a seus eixos de formação.'
+        },
+        {
+            key: 'ind1Status',
+            label: '3. Eficiência na Gestão de Recursos Lotéricos',
+            subLabel: '(Cumprimento de Normas e Fluxos nos Eixos ETM e MEE)',
+            description: 'Garantir o atendimento às normas de execução, controle e prestação de contas dos projetos apoiados com recursos lotéricos, com conformidade e transparência, dentro dos padrões estabelecidos pelo CBC, como medida condicionante à continuidade dos projetos, ao repasse de parcelas de recursos e à concessão de bonificações.'
+        },
+        {
+            key: 'ind4Status',
+            label: '4. Disponibilidade dos Recursos',
+            subLabel: '(Bloqueio Judicial)',
+            description: 'Garantir a manutenção dos recursos lotéricos nas contas dos projetos, para que sejam aplicados exclusivamente nas finalidades para as quais se destinam, e promover a devolução tempestiva de valores no caso de ocorrência de bloqueios judiciais.'
+        },
+        {
+            key: 'ind5Status',
+            label: '5. Transparência Ativa no CBC & Clubes EXPO',
+            subLabel: '(Benefícios e Resultados do Clube no PFA)',
+            description: 'Garantir a divulgação dos beneficios recebidos no âmbito do PFA e resultados alcançados perante a comunidade esportiva, sociedade em geral e órgãos de controle, inclusive com a obrigatoriedade de distribuição de folders, bem como por outros meios viáveis.'
+        },
+        {
+            key: 'ind6Status',
+            label: '6. Adimplência Contratual',
+            subLabel: '(Estande no CBC & Clubes EXPO)',
+            description: 'Garantir o cumprimento das obrigações contratuais assumidas pelo Clube na CBC & Clubes EXPO, assegurando responsabilidade financeira e institucional, em face da bonificação recebida pelo Clube nos Eixos MEE e/ou ETM do PFA.'
+        },
+        {
+            key: 'ind7Status',
+            label: '7. Adimplência de Contribuição',
+            subLabel: '(Associativa junto ao CBC)',
+            description: 'Garantir o cumprimento das obrigações relativas à contribuição associativa, assegurando regularidade institucional em respeito ao Estatuto Social do CBC.'
+        },
+    ];
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden p-8" },
+            React.createElement("h1", { className: "text-4xl font-bold mb-2" }, "Painel de Resultados Gerais"),
+            React.createElement("p", { className: "text-blue-200 text-lg" }, "Vis\u00E3o consolidada do desempenho do clube nos indicadores do ciclo.")),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-left border-collapse" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[40%]" }, "Indicadores"),
+                            OVERALL_SUMMARIES.map(s => (React.createElement("th", { key: s.year, className: "px-6 py-4 text-center" },
+                                "Status ",
+                                s.year))))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, indicators.map((ind, idx) => (React.createElement("tr", { key: idx, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "flex items-center" },
+                                React.createElement("div", null,
+                                    React.createElement("div", { className: "font-bold text-slate-900 text-lg" }, ind.label),
+                                    React.createElement("div", { className: "text-slate-500 text-sm" }, ind.subLabel)),
+                                React.createElement(InfoTooltip, { description: ind.description }))),
+                        OVERALL_SUMMARIES.map(summary => (React.createElement("td", { key: summary.year, className: "px-6 py-4 text-center" },
+                            React.createElement("div", { className: "flex justify-center" },
+                                React.createElement(StatusIcon, { status: summary[ind.key] }))))))))),
+                    React.createElement("tfoot", { className: "bg-slate-100 font-bold border-t-2 border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-6 text-right text-xl uppercase tracking-wider text-slate-700" }, "Status Final do Ano"),
+                            OVERALL_SUMMARIES.map(summary => {
+                                const status = getYearFinalStatus(summary);
+                                return (React.createElement("td", { key: summary.year, className: "px-6 py-6 text-center" },
+                                    React.createElement("span", { className: `px-4 py-2 rounded-full text-lg font-bold uppercase shadow-sm border ${status === 'Regular'
+                                            ? 'bg-green-100 text-green-700 border-green-200'
+                                            : 'bg-red-100 text-red-700 border-red-200'}` }, status)));
+                            }))))))));
+};
+/* ===== components/GovernanceDashboard.tsx ===== */
+const GovernanceDashboard = () => {
+    const [activeTab, setActiveTab] = useState(0);
+    const renderContent = () => {
+        switch (activeTab) {
+            case 0: return React.createElement(GovernanceInstitutional, null);
+            case 1: return React.createElement(DashboardCharts, null);
+            case 2: return React.createElement(GeneralSummary, null);
+            case 3: return React.createElement(Indicator2, null); // Now Indicador 1
+            case 4: return React.createElement(Indicator3, null); // Now Indicador 2
+            case 5: return React.createElement(Indicator1, null); // Now Indicador 3
+            case 6: return React.createElement(Indicator4, null);
+            case 7: return React.createElement(Indicator5, null);
+            case 8: return React.createElement(Indicator6, null);
+            case 9: return React.createElement(Indicator7, null);
+            case 10: return React.createElement(HistoryTab, null);
+            case 11: return React.createElement(MarcosRD05, null);
+            default: return React.createElement(GovernanceInstitutional, null);
+        }
+    };
+    const tabs = [
+        'Governança Institucional',
+        'Gráficos',
+        'Resumo Geral',
+        'Indicador 1',
+        'Indicador 2',
+        'Indicador 3',
+        'Indicador 4',
+        'Indicador 5',
+        'Indicador 6',
+        'Indicador 7',
+        'Dados por Ação',
+        'Marcos RD05-A'
+    ];
+    return (React.createElement("div", { className: "flex flex-col h-full" },
+        React.createElement("div", { className: "bg-white border-b border-slate-200 mb-6 sticky top-0 z-30" },
+            React.createElement("div", { className: "px-4 sm:px-6" },
+                React.createElement("div", { className: "flex space-x-8 overflow-x-auto no-scrollbar" }, tabs.map((tab, index) => (React.createElement("button", { key: index, onClick: () => setActiveTab(index), className: `py-4 px-1 border-b-2 font-medium text-base whitespace-nowrap transition-colors ${activeTab === index
+                        ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}` }, tab)))))),
+        React.createElement("div", { className: "flex-1 px-4 sm:px-6 pb-8" }, renderContent())));
+};
+/* ===== components/GovernanceInstitutional.tsx ===== */
+const GovernanceInstitutional = () => {
+    return (React.createElement("div", { className: "space-y-8" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8" },
+            React.createElement("h1", { className: "text-3xl md:text-4xl font-bold" }, "Governan\u00E7a Institucional"),
+            React.createElement("p", { className: "text-blue-200 text-lg" }, "Matriz de indicadores, objetivos, base legal e a\u00E7\u00F5es de conformidade.")),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-left border-collapse" },
+                    React.createElement("thead", { className: "bg-[#f27a23] text-white text-sm uppercase font-bold tracking-wider" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[20%] border-r border-orange-400" }, "Indicador"),
+                            React.createElement("th", { className: "px-6 py-4 w-[35%] border-r border-orange-400" }, "Objetivo"),
+                            React.createElement("th", { className: "px-6 py-4 w-[15%] border-r border-orange-400" }, "Base Legal"),
+                            React.createElement("th", { className: "px-6 py-4 w-[30%]" }, "A\u00E7\u00F5es"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-200 text-slate-700" }, GOVERNANCE_TABLE_DATA.map((row, index) => (React.createElement("tr", { key: index, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4 align-top border-r border-slate-200" },
+                            React.createElement("div", { className: "font-bold text-slate-900 text-base" }, row.indicator),
+                            row.subIndicator && (React.createElement("div", { className: "text-sm text-slate-500 mt-1 italic" }, row.subIndicator))),
+                        React.createElement("td", { className: "px-6 py-4 align-top text-sm leading-relaxed text-slate-600 border-r border-slate-200" }, row.objective),
+                        React.createElement("td", { className: "px-6 py-4 align-top border-r border-slate-200" },
+                            React.createElement("ul", { className: "list-none space-y-2" }, row.legalBasis.map((law, idx) => (React.createElement("li", { key: idx, className: "text-sm font-semibold text-slate-700" }, law))))),
+                        React.createElement("td", { className: "px-6 py-4 align-top" },
+                            React.createElement("ul", { className: "list-disc list-outside ml-4 space-y-1.5" }, row.actions.map((action, idx) => (React.createElement("li", { key: idx, className: "text-sm text-slate-700" }, action))))))))))))));
+};
+const HistoryTab_StatusDot = ({ status }) => {
+    let color = "bg-gray-300";
+    let title = "Pendente";
+    if (status === 'OK')
+        color = "bg-green-500", title = "Validado";
+    else if (status === 'ATRASO')
+        color = "bg-yellow-500", title = "Com Atraso";
+    else if (status === 'NAO_ENTREGUE')
+        color = "bg-red-500", title = "Não Validado";
+    return React.createElement("div", { title: title, className: `w-3 h-3 rounded-full ${color} mx-auto shadow-sm` });
+};
+const HistoryTab = () => {
+    const [activeTab, setActiveTab] = useState('consolidated');
+    const [expandedRows, setExpandedRows] = useState([]);
+    const toggleRow = (id) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+    // 1. Unify Data
+    const rows = [];
+    // Indicator 1: Regularidade Cadastral
+    CERTIFICATE_DATA.forEach(item => {
+        const hasNegative = [item.status2026, item.status2027, item.status2028].includes(Status.NAO_VALIDADO);
+        rows.push({
+            indicatorId: 1, action: item.action, verification: item.frequency, methodology: item.methodology, type: 'status',
+            val2026: item.status2026, val2027: item.status2027, val2028: item.status2028,
+            valTotal: hasNegative ? Status.NAO_VALIDADO : Status.VALIDADO,
+            raw: item
+        });
+    });
+    // Indicator 2: Participação em Capacitações
+    INDICATOR3_DATA.forEach(item => {
+        const hasNegative = [item.status2026, item.status2027, item.status2028].includes(false);
+        rows.push({
+            indicatorId: 2, action: item.action, verification: item.verification, methodology: item.methodology, type: 'boolean',
+            val2026: item.status2026, val2027: item.status2027, val2028: item.status2028,
+            valTotal: !hasNegative,
+            raw: item
+        });
+    });
+    // Indicator 3: Eficiência na Gestão
+    INDICATOR1_DATA.forEach(item => {
+        const getQuant = (yearData) => ({
+            success: yearData.periods.filter(p => p.status === 'OK').length,
+            total: yearData.periods.length
+        });
+        const d26 = getQuant(item.data[2026]), d27 = getQuant(item.data[2027]), d28 = getQuant(item.data[2028]);
+        rows.push({
+            indicatorId: 3, action: item.action, verification: item.verification, methodology: item.methodology, type: 'quantity',
+            val2026: d26, val2027: d27, val2028: d28,
+            valTotal: { success: d26.success + d27.success + d28.success, total: d26.total + d27.total + d28.total },
+            raw: item
+        });
+    });
+    // Indicators 4-7
+    INDICATOR4_DATA.forEach(item => rows.push({
+        indicatorId: 4, action: item.action, verification: item.verification, methodology: item.methodology, type: 'boolean',
+        val2026: item.status2026, val2027: item.status2027, val2028: item.status2028, valTotal: item.status2026 && item.status2027 && item.status2028,
+        raw: item
+    }));
+    INDICATOR5_DATA.forEach(item => rows.push({
+        indicatorId: 5, action: item.action, verification: item.verification, methodology: item.methodology, type: 'boolean',
+        val2026: item.status2026, val2027: item.status2027, val2028: item.status2028, valTotal: item.status2026 || item.status2027 || item.status2028,
+        raw: item
+    }));
+    INDICATOR6_DATA.forEach(item => rows.push({
+        indicatorId: 6, action: item.action, verification: item.verification, methodology: item.methodology, type: 'percent',
+        val2026: item.percent2026, val2027: item.percent2027, val2028: item.percent2028, valTotal: Math.round((item.percent2026 + item.percent2027 + item.percent2028) / 3),
+        raw: item
+    }));
+    INDICATOR7_DATA.forEach(item => rows.push({
+        indicatorId: 7, action: item.action, verification: item.verification, methodology: item.methodology, type: 'percent',
+        val2026: item.percent2026, val2027: item.percent2027, val2028: item.percent2028, valTotal: Math.round((item.percent2026 + item.percent2027 + item.percent2028) / 3),
+        raw: item
+    }));
+    const renderCell = (value, type) => {
+        if (type === 'quantity')
+            return React.createElement("div", { className: "flex items-center justify-center font-bold px-2 py-1 rounded border text-sm bg-blue-50 text-blue-700 border-blue-200" },
+                value.success,
+                "/",
+                value.total);
+        if (type === 'status') {
+            const isValid = value === Status.VALIDADO;
+            return React.createElement("div", { className: `flex items-center justify-center px-2 py-1 rounded border text-xs font-bold uppercase ${isValid ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}` }, isValid ? 'Validado' : 'Não Val.');
+        }
+        if (type === 'boolean')
+            return React.createElement("div", { className: `flex items-center justify-center px-2 py-1 rounded border text-sm font-bold ${value ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}` }, value ? 'Sim' : 'Não');
+        if (type === 'percent')
+            return React.createElement("div", { className: `flex items-center justify-center px-2 py-1 rounded border text-sm font-bold ${value >= 75 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}` },
+                value,
+                "%");
+        return value;
+    };
+    const renderConsolidated = () => (React.createElement("div", { className: "overflow-x-auto" },
+        React.createElement("table", { className: "w-full text-left border-collapse" },
+            React.createElement("thead", { className: "bg-gray-600 text-white text-sm uppercase font-bold tracking-wider" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-4 py-4 w-[5%] text-center border-r border-gray-500" }, "Ind."),
+                    React.createElement("th", { className: "px-4 py-4 w-[35%] border-r border-gray-500" }, "A\u00E7\u00F5es"),
+                    React.createElement("th", { className: "px-4 py-4 w-[10%] text-center border-r border-gray-500" }, "Marco"),
+                    React.createElement("th", { className: "px-4 py-4 w-[22%] border-r border-gray-500" }, "Metodologia"),
+                    React.createElement("th", { className: "px-2 py-4 w-[7%] text-center border-r border-gray-500" }, "2026"),
+                    React.createElement("th", { className: "px-2 py-4 w-[7%] text-center border-r border-gray-500" }, "2027"),
+                    React.createElement("th", { className: "px-2 py-4 w-[7%] text-center border-r border-gray-500" }, "2028"),
+                    React.createElement("th", { className: "px-2 py-4 w-[7%] text-center bg-gray-700" }, "Total Ciclo"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-200 text-slate-700" }, rows.map((row, idx) => (React.createElement("tr", { key: idx, className: "hover:bg-slate-50 transition-colors" },
+                React.createElement("td", { className: "px-4 py-3 text-center font-bold text-slate-500 border-r border-slate-200" }, row.indicatorId),
+                React.createElement("td", { className: "px-4 py-3 font-semibold text-slate-800 border-r border-slate-200" }, row.action),
+                React.createElement("td", { className: "px-4 py-3 text-center text-sm text-slate-500 border-r border-slate-200" }, row.verification),
+                React.createElement("td", { className: "px-4 py-3 text-sm text-slate-500 border-r border-slate-200 whitespace-pre-line" }, row.methodology),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200" }, renderCell(row.val2026, row.type)),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200" }, renderCell(row.val2027, row.type)),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200" }, renderCell(row.val2028, row.type)),
+                React.createElement("td", { className: "px-2 py-3 bg-slate-50 font-bold" }, renderCell(row.valTotal, row.type)))))))));
+    const renderYearView = (year) => (React.createElement("div", { className: "overflow-x-auto" },
+        React.createElement("table", { className: "w-full text-left border-collapse" },
+            React.createElement("thead", { className: "bg-gray-600 text-white text-sm uppercase font-bold tracking-wider" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-4 py-4 w-[5%] text-center border-r border-gray-500" }, "Ind."),
+                    React.createElement("th", { className: "px-4 py-4 w-[45%] border-r border-gray-500" }, "A\u00E7\u00F5es"),
+                    React.createElement("th", { className: "px-4 py-4 w-[30%] border-r border-gray-500" }, "Metodologia"),
+                    React.createElement("th", { className: "px-2 py-4 w-[10%] text-center border-r border-gray-500" }, "Status"),
+                    React.createElement("th", { className: "px-2 py-4 w-[10%] text-center bg-gray-700" }, "Detalhes"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-200 text-slate-700" }, rows.map((row, idx) => {
+                const rowKey = `${row.indicatorId}-${row.action}-${year}`;
+                const isExpanded = expandedRows.includes(rowKey);
+                const val = year === 2026 ? row.val2026 : year === 2027 ? row.val2027 : row.val2028;
+                return (React.createElement(React.Fragment, { key: idx },
+                    React.createElement("tr", { className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-4 py-3 text-center font-bold text-slate-500 border-r border-slate-200" }, row.indicatorId),
+                        React.createElement("td", { className: "px-4 py-3 font-semibold text-slate-800 border-r border-slate-200" }, row.action),
+                        React.createElement("td", { className: "px-4 py-3 text-sm text-slate-500 border-r border-slate-200 whitespace-pre-line" }, row.methodology),
+                        React.createElement("td", { className: "px-2 py-3 border-r border-slate-200" }, renderCell(val, row.type)),
+                        React.createElement("td", { className: "px-2 py-3 text-center" }, row.type === 'quantity' || row.indicatorId === 3 ? (React.createElement("button", { onClick: () => toggleRow(rowKey), className: "text-blue-600 hover:text-blue-800 font-bold text-sm" }, isExpanded ? 'Ocultar' : 'Ver')) : '-')),
+                    isExpanded && row.indicatorId === 3 && (React.createElement("tr", { className: "bg-slate-50" },
+                        React.createElement("td", { colSpan: 5, className: "px-6 py-4 border-b border-slate-200" },
+                            React.createElement("div", { className: "bg-white border border-slate-200 rounded-lg p-4 shadow-inner" },
+                                React.createElement("div", { className: "grid grid-cols-6 gap-4" }, row.raw.data[year].periods.map((p, pIdx) => (React.createElement("div", { key: pIdx, className: "flex flex-col items-center p-2 rounded bg-slate-50 border border-slate-100" },
+                                    React.createElement("span", { className: "text-[10px] font-bold text-slate-500 uppercase mb-1" }, p.period),
+                                    React.createElement(HistoryTab_StatusDot, { status: p.status })))))))))));
+            })))));
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8" },
+            React.createElement("h1", { className: "text-3xl md:text-4xl font-bold" }, "Hist\u00F3rico Indicadores de Governan\u00E7a Institucional"),
+            React.createElement("p", { className: "text-blue-200 text-lg" }, "Acompanhamento detalhado das a\u00E7\u00F5es por ano de refer\u00EAncia.")),
+        React.createElement("div", { className: "flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-sm" },
+            React.createElement("button", { onClick: () => setActiveTab('consolidated'), className: `flex-1 py-4 font-bold ${activeTab === 'consolidated' ? 'bg-blue-50 text-blue-800 border-b-4 border-blue-800' : 'text-slate-500'}` }, "Painel Consolidado"),
+            [2026, 2027, 2028].map(y => (React.createElement("button", { key: y, onClick: () => setActiveTab(y), className: `flex-1 py-4 font-bold ${activeTab === y ? 'bg-blue-50 text-blue-800 border-b-4 border-blue-800' : 'text-slate-500'}` }, y)))),
+        React.createElement("div", { className: "bg-white rounded-b-xl shadow-sm border border-slate-200 overflow-hidden" }, activeTab === 'consolidated' ? renderConsolidated() : renderYearView(activeTab))));
+};
+/* ===== components/Indicator1.tsx ===== */
+const Indicator1_StatusDot = ({ status }) => {
+    let color = "bg-gray-300";
+    let title = "Pendente";
+    if (status === 'OK') {
+        color = "bg-green-500";
+        title = "Validado";
+    }
+    else if (status === 'ATRASO') {
+        color = "bg-yellow-500";
+        title = "Com Atraso";
+    }
+    else if (status === 'NAO_ENTREGUE') {
+        color = "bg-red-500";
+        title = "Não Validado/Entregue";
+    }
+    return (React.createElement("div", { title: title, className: `w-3 h-3 rounded-full ${color} mx-auto shadow-sm` }));
+};
+const Indicator1 = () => {
+    const [activeTab, setActiveTab] = useState('consolidated');
+    const [expandedRows, setExpandedRows] = useState([]);
+    const toggleRow = (id) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+    const calculateRowStats = (row, year) => {
+        const periods = row.data[year].periods;
+        const total = periods.length;
+        // Calculation Rule: Only 'OK' counts as full success. 'ATRASO' or 'NAO_ENTREGUE' reduce score.
+        const okCount = periods.filter(p => p.status === 'OK').length;
+        // Percent Calculation
+        const percent = total > 0 ? (okCount / total) * 100 : 0;
+        // Score Calculation: Weight * Percent
+        const score = (row.weight * percent) / 100;
+        return { okCount, total, percent, score };
+    };
+    const getStatus = (score) => score >= 70 ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    // Calculate totals for all years for the consolidated view
+    const totals = {
+        2026: INDICATOR1_DATA.reduce((acc, row) => acc + calculateRowStats(row, 2026).score, 0),
+        2027: INDICATOR1_DATA.reduce((acc, row) => acc + calculateRowStats(row, 2027).score, 0),
+        2028: INDICATOR1_DATA.reduce((acc, row) => acc + calculateRowStats(row, 2028).score, 0),
+    };
+    const renderConsolidatedView = () => (React.createElement("div", { className: "overflow-x-auto" },
+        React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+            React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-6 py-4 w-[50%]" }, "A\u00E7\u00E3o"),
+                    React.createElement("th", { className: "px-4 py-4 w-[10%] text-center" }, "Peso"),
+                    React.createElement("th", { className: "px-4 py-4 w-[13%] text-center bg-blue-50/50" }, "Nota 2026"),
+                    React.createElement("th", { className: "px-4 py-4 w-[13%] text-center bg-orange-50/50" }, "Nota 2027"),
+                    React.createElement("th", { className: "px-4 py-4 w-[14%] text-center bg-gray-50/50" }, "Nota 2028"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR1_DATA.map((row) => {
+                const s2026 = calculateRowStats(row, 2026);
+                const s2027 = calculateRowStats(row, 2027);
+                const s2028 = calculateRowStats(row, 2028);
+                return (React.createElement("tr", { key: row.id, className: "hover:bg-slate-50 transition-colors" },
+                    React.createElement("td", { className: "px-6 py-4" },
+                        React.createElement("div", { className: "font-bold text-slate-900" }, row.action),
+                        React.createElement("div", { className: "text-xs text-slate-400 mt-1" }, row.methodology.split('\n')[0])),
+                    React.createElement("td", { className: "px-4 py-4 text-center font-bold text-slate-700" }, row.weight),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-blue-50/30" },
+                        React.createElement("span", { className: `inline-block px-2 py-1 rounded font-bold ${s2026.percent === 100 ? 'text-green-700 bg-green-50' : s2026.percent < 100 && s2026.percent > 0 ? 'text-yellow-700 bg-yellow-50' : 'text-red-700 bg-red-50'}` }, s2026.score.toFixed(1))),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-orange-50/30" },
+                        React.createElement("span", { className: `inline-block px-2 py-1 rounded font-bold ${s2027.percent === 100 ? 'text-green-700 bg-green-50' : s2027.percent < 100 && s2027.percent > 0 ? 'text-yellow-700 bg-yellow-50' : 'text-red-700 bg-red-50'}` }, s2027.score.toFixed(1))),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-gray-50/30" },
+                        React.createElement("span", { className: `inline-block px-2 py-1 rounded font-bold ${s2028.percent === 100 ? 'text-green-700 bg-green-50' : s2028.percent < 100 && s2028.percent > 0 ? 'text-yellow-700 bg-yellow-50' : 'text-red-700 bg-red-50'}` }, s2028.score.toFixed(1)))));
+            })),
+            React.createElement("tfoot", { className: "bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-200" },
+                React.createElement("tr", null,
+                    React.createElement("td", { colSpan: 2, className: "px-6 py-4 text-right text-lg uppercase tracking-wide" }, "Total Geral"),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-blue-100/50" },
+                        React.createElement("div", { className: "flex flex-col items-center" },
+                            React.createElement("span", { className: "text-xl text-[#1e3a8a]" }, totals[2026].toFixed(1)),
+                            React.createElement("span", { className: `text-[10px] uppercase px-2 py-0.5 rounded border ${getStatus(totals[2026]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(totals[2026])))),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-orange-100/50" },
+                        React.createElement("div", { className: "flex flex-col items-center" },
+                            React.createElement("span", { className: "text-xl text-[#1e3a8a]" }, totals[2027].toFixed(1)),
+                            React.createElement("span", { className: `text-[10px] uppercase px-2 py-0.5 rounded border ${getStatus(totals[2027]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(totals[2027])))),
+                    React.createElement("td", { className: "px-4 py-4 text-center bg-gray-100/50" },
+                        React.createElement("div", { className: "flex flex-col items-center" },
+                            React.createElement("span", { className: "text-xl text-[#1e3a8a]" }, totals[2028].toFixed(1)),
+                            React.createElement("span", { className: `text-[10px] uppercase px-2 py-0.5 rounded border ${getStatus(totals[2028]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(totals[2028])))))))));
+    const renderYearView = (year) => (React.createElement("div", { className: "overflow-x-auto" },
+        React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+            React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-6 py-4 w-[40%]" }, "A\u00E7\u00E3o"),
+                    React.createElement("th", { className: "px-4 py-4 w-[15%] text-center" }, "Frequ\u00EAncia"),
+                    React.createElement("th", { className: "px-4 py-4 w-[10%] text-center" }, "Peso"),
+                    React.createElement("th", { className: "px-4 py-4 w-[15%] text-center" }, "Aproveitamento"),
+                    React.createElement("th", { className: "px-4 py-4 w-[10%] text-center" }, "Nota"),
+                    React.createElement("th", { className: "px-4 py-4 w-[10%] text-center" }, "Detalhes"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR1_DATA.map((row) => {
+                const stats = calculateRowStats(row, year);
+                const isExpanded = expandedRows.includes(row.id);
+                const periods = row.data[year].periods;
+                return (React.createElement(React.Fragment, { key: row.id },
+                    React.createElement("tr", { className: `hover:bg-slate-50 transition-colors ${isExpanded ? 'bg-slate-50' : ''}` },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "font-bold text-slate-900" }, row.action),
+                            React.createElement("div", { className: "text-xs text-slate-400 mt-1" }, row.methodology.split('\n')[0])),
+                        React.createElement("td", { className: "px-4 py-4 text-center" },
+                            React.createElement("span", { className: "inline-block px-2 py-1 rounded bg-slate-100 text-xs font-bold uppercase text-slate-600 border border-slate-200" }, row.verification)),
+                        React.createElement("td", { className: "px-4 py-4 text-center font-bold text-slate-700" }, row.weight),
+                        React.createElement("td", { className: "px-4 py-4 text-center" },
+                            React.createElement("div", { className: "flex flex-col items-center" },
+                                React.createElement("span", { className: "font-bold text-slate-800" },
+                                    stats.percent.toFixed(0),
+                                    "%"),
+                                React.createElement("span", { className: "text-xs text-slate-400" },
+                                    "(",
+                                    stats.okCount,
+                                    "/",
+                                    stats.total,
+                                    ")"))),
+                        React.createElement("td", { className: "px-4 py-4 text-center" },
+                            React.createElement("div", { className: `inline-flex items-center justify-center w-12 h-8 rounded font-bold ${stats.percent === 100 ? 'bg-green-100 text-green-700' :
+                                    stats.percent >= 70 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}` }, stats.score.toFixed(1))),
+                        React.createElement("td", { className: "px-4 py-4 text-center" },
+                            React.createElement("button", { onClick: () => toggleRow(row.id), className: "text-blue-600 hover:text-blue-800 font-medium text-sm focus:outline-none" }, isExpanded ? 'Ocultar' : 'Ver Mês a Mês'))),
+                    isExpanded && (React.createElement("tr", { className: "bg-slate-50" },
+                        React.createElement("td", { colSpan: 6, className: "px-6 py-4 border-b border-slate-200" },
+                            React.createElement("div", { className: "bg-white border border-slate-200 rounded-lg p-4 shadow-inner" },
+                                React.createElement("h4", { className: "text-sm font-bold text-slate-700 uppercase mb-3 border-b border-slate-100 pb-2" },
+                                    "Detalhamento de Entregas (",
+                                    year,
+                                    ")"),
+                                React.createElement("div", { className: "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" }, periods.map((p, idx) => (React.createElement("div", { key: idx, className: "flex flex-col items-center p-2 rounded bg-slate-50 border border-slate-100" },
+                                    React.createElement("span", { className: "text-xs font-bold text-slate-500 uppercase mb-1.5" }, p.period),
+                                    React.createElement(Indicator1_StatusDot, { status: p.status }),
+                                    React.createElement("span", { className: `text-[10px] font-bold mt-1 uppercase ${p.status === 'OK' ? 'text-green-600' :
+                                            p.status === 'ATRASO' ? 'text-yellow-600' : 'text-red-600'}` }, p.status === 'OK' ? 'Validado' : p.status.replace('_', ' ')))))),
+                                React.createElement("div", { className: "mt-4 flex gap-4 text-xs text-slate-500 border-t border-slate-100 pt-2" },
+                                    React.createElement("div", { className: "flex items-center gap-1" },
+                                        React.createElement("div", { className: "w-2 h-2 rounded-full bg-green-500" }),
+                                        " Validado (Conta para nota)"),
+                                    React.createElement("div", { className: "flex items-center gap-1" },
+                                        React.createElement("div", { className: "w-2 h-2 rounded-full bg-yellow-500" }),
+                                        " Atraso (N\u00E3o conta)"),
+                                    React.createElement("div", { className: "flex items-center gap-1" },
+                                        React.createElement("div", { className: "w-2 h-2 rounded-full bg-red-500" }),
+                                        " N\u00E3o Entregue (N\u00E3o conta)"))))))));
+            })),
+            React.createElement("tfoot", { className: "bg-slate-100 font-bold text-slate-800" },
+                React.createElement("tr", null,
+                    React.createElement("td", { colSpan: 4, className: "px-6 py-4 text-right text-lg" },
+                        "NOTA FINAL ",
+                        year,
+                        ":"),
+                    React.createElement("td", { className: "px-4 py-4 text-center text-xl text-[#1e3a8a]" }, totals[year].toFixed(1)),
+                    React.createElement("td", null))))));
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 3: Efici\u00EAncia na Gest\u00E3o de Recursos Lot\u00E9ricos")),
+                activeTab !== 'consolidated' && (React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20 min-w-[200px]" },
+                    React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-2" },
+                        "Resultado ",
+                        activeTab),
+                    React.createElement("div", { className: "flex items-end gap-3" },
+                        React.createElement("span", { className: "text-4xl font-bold" }, totals[activeTab].toFixed(1)),
+                        React.createElement("span", { className: `mb-1 px-2 py-0.5 rounded text-sm font-bold uppercase ${getStatus(totals[activeTab]) === ClubStatus.REGULAR ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}` }, getStatus(totals[activeTab]))))),
+                activeTab === 'consolidated' && (React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20 min-w-[200px]" },
+                    React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-2" }, "Vis\u00E3o Geral"),
+                    React.createElement("div", { className: "text-lg font-bold" }, "Acompanhamento do Ciclo"))))),
+        React.createElement("div", { className: "flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-sm" },
+            React.createElement("button", { onClick: () => setActiveTab('consolidated'), className: `flex-1 py-4 text-center font-bold text-lg transition-colors border-b-4 ${activeTab === 'consolidated'
+                    ? 'border-[#1e3a8a] text-[#1e3a8a] bg-blue-50'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}` }, "Painel Consolidado"),
+            [2026, 2027, 2028].map((year) => (React.createElement("button", { key: year, onClick: () => setActiveTab(year), className: `flex-1 py-4 text-center font-bold text-lg transition-colors border-b-4 ${activeTab === year
+                    ? 'border-[#1e3a8a] text-[#1e3a8a] bg-blue-50'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}` },
+                "Painel ",
+                year)))),
+        React.createElement("div", { className: "bg-white rounded-b-xl shadow-sm border border-t-0 border-slate-200 overflow-hidden" }, activeTab === 'consolidated' ? renderConsolidatedView() : renderYearView(activeTab))));
+};
+/* ===== components/Indicator2.tsx ===== */
+const Indicator2 = () => {
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 1: Regularidade Cadastral e de Certid\u00F5es")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("p", { className: "text-base font-medium" }, "8 \"Validado\" = Regular"),
+                        React.createElement("p", { className: "text-base font-medium mt-1" }, "\u2265 1 \"N\u00E3o Validado\" = Irregular"))))),
+        React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-3 gap-6" },
+            React.createElement("div", { className: "lg:col-span-1 space-y-6" },
+                React.createElement(SummaryChart, null),
+                React.createElement("div", { className: "bg-indigo-900 text-white p-6 rounded-xl shadow-sm" },
+                    React.createElement("h4", { className: "text-xl font-bold mb-2" }, "Resumo da An\u00E1lise"),
+                    React.createElement("p", { className: "text-indigo-200 text-base leading-relaxed" }, "A an\u00E1lise demonstra uma evolu\u00E7\u00E3o positiva na regularidade do clube. Enquanto 2026 apresenta irregularidades significativas (50% n\u00E3o validado), os anos de 2027 e 2028 mostram uma tend\u00EAncia de regulariza\u00E7\u00E3o."))),
+            React.createElement("div", { className: "lg:col-span-2" },
+                React.createElement(DetailedTable, null)))));
+};
+/* ===== components/Indicator3.tsx ===== */
+const Indicator3_StatusBadge = ({ status }) => {
+    return (React.createElement("div", { className: `flex items-center justify-center font-bold px-3 py-1.5 rounded-md border text-base w-20 mx-auto ${status
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` }, status ? "Sim" : "Não"));
+};
+const Indicator3 = () => {
+    const getSimCount = (year) => INDICATOR3_DATA.filter(i => i[year]).length;
+    const counts = {
+        2026: getSimCount('status2026'),
+        2027: getSimCount('status2027'),
+        2028: getSimCount('status2028'),
+    };
+    const getStatus = (count) => count >= 3 ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 2: Participa\u00E7\u00E3o em Capacita\u00E7\u00F5es T\u00E9cnicas")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("div", { className: "flex items-center gap-2" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-green-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "3 participa\u00E7\u00F5es = Regular")),
+                        React.createElement("div", { className: "flex items-center gap-2 mt-1" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-red-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "\u2264 2 participa\u00E7\u00F5es = Irregular")))))),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "p-6 border-b border-slate-200" },
+                React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Hist\u00F3rico de Participa\u00E7\u00E3o"),
+                React.createElement("p", { className: "text-base text-slate-500" }, "Presen\u00E7a do clube em eventos obrigat\u00F3rios.")),
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[60%]" }, "A\u00E7\u00E3o / Evento"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2026"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2027"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2028"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR3_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "font-bold text-lg text-slate-900" }, item.action),
+                            React.createElement("div", { className: "text-base text-slate-500 mt-1 whitespace-pre-line" }, item.methodology)),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator3_StatusBadge, { status: item.status2026 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator3_StatusBadge, { status: item.status2027 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator3_StatusBadge, { status: item.status2028 })))))),
+                    React.createElement("tfoot", { className: "bg-slate-50 border-t border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-4 font-bold text-slate-900 text-right text-lg" }, "AVALIA\u00C7\u00C3O GERAL"),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(counts[2026]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(counts[2026])))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(counts[2027]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(counts[2027])))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(counts[2028]) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(counts[2028])))))))))));
+};
+/* ===== components/Indicator4.tsx ===== */
+const Indicator4_StatusBadge = ({ status }) => {
+    return (React.createElement("div", { className: `flex items-center justify-center font-bold px-3 py-1.5 rounded-md border text-base w-20 mx-auto ${status
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` }, status ? "Sim" : "Não"));
+};
+const Indicator4 = () => {
+    const getStatus = (isValid) => isValid ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 4: Disponibilidade dos Recursos (Bloqueio Judicial)")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("div", { className: "flex items-center gap-2" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-green-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "Regular = Sim")),
+                        React.createElement("div", { className: "flex items-center gap-2 mt-1" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-red-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "Irregular = N\u00E3o")))))),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "p-6 border-b border-slate-200" },
+                React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Saneamento no Prazo"),
+                React.createElement("p", { className: "text-base text-slate-500" }, "Verifica\u00E7\u00E3o de bloqueio judicial com devolu\u00E7\u00E3o.")),
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[60%]" }, "A\u00E7\u00E3o / Metodologia"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2026"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2027"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2028"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR4_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "font-bold text-lg text-slate-900" }, item.action),
+                            React.createElement("div", { className: "text-base text-slate-500 mt-1 whitespace-pre-line" }, item.methodology),
+                            React.createElement("div", { className: "inline-block mt-2 px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-sm font-medium border border-slate-200" }, item.verification)),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator4_StatusBadge, { status: item.status2026 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator4_StatusBadge, { status: item.status2027 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator4_StatusBadge, { status: item.status2028 })))))),
+                    React.createElement("tfoot", { className: "bg-slate-50 border-t border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-4 font-bold text-slate-900 text-right text-lg" }, "AVALIA\u00C7\u00C3O GERAL"),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR4_DATA[0].status2026) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR4_DATA[0].status2026)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR4_DATA[0].status2027) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR4_DATA[0].status2027)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR4_DATA[0].status2028) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR4_DATA[0].status2028)))))))))));
+};
+/* ===== components/Indicator5.tsx ===== */
+const Indicator5_StatusBadge = ({ status }) => {
+    return (React.createElement("div", { className: `flex items-center justify-center font-bold px-3 py-1.5 rounded-md border text-base w-20 mx-auto ${status
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` }, status ? "Sim" : "Não"));
+};
+const Indicator5 = () => {
+    const getStatus = (isValid) => isValid ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    // Function to split action and sub-label (parentheses part)
+    const formatAction = (action) => {
+        const parts = action.split('(');
+        if (parts.length > 1) {
+            return (React.createElement(React.Fragment, null,
+                React.createElement("div", { className: "font-bold text-lg text-slate-900" }, parts[0].trim()),
+                React.createElement("div", { className: "text-sm text-slate-500 mt-0.5" },
+                    "(",
+                    parts[1])));
+        }
+        return React.createElement("div", { className: "font-bold text-lg text-slate-900" }, action);
+    };
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 5: Transpar\u00EAncia Ativa no CBC & Clubes EXPO")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("div", { className: "flex items-center gap-2" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-green-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "1 distribui\u00E7\u00E3o \"Sim\" = Regular")),
+                        React.createElement("div", { className: "flex items-center gap-2 mt-1" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-red-400" }),
+                            React.createElement("p", { className: "text-base font-medium" }, "0 distribui\u00E7\u00E3o \"Sim\" = Irregular")))))),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "p-6 border-b border-slate-200" },
+                React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Distribui\u00E7\u00E3o"),
+                React.createElement("p", { className: "text-base text-slate-500" }, "Verifica\u00E7\u00E3o \"In Loco\".")),
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[60%]" }, "A\u00E7\u00E3o / Metodologia"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2026"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2027"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "Status Clube 2028"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR5_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            formatAction(item.action),
+                            React.createElement("div", { className: "text-base text-slate-500 mt-2 whitespace-pre-line" }, item.methodology),
+                            React.createElement("div", { className: "inline-block mt-2 px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-sm font-medium border border-slate-200" }, item.verification)),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator5_StatusBadge, { status: item.status2026 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator5_StatusBadge, { status: item.status2027 })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator5_StatusBadge, { status: item.status2028 })))))),
+                    React.createElement("tfoot", { className: "bg-slate-50 border-t border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-4 font-bold text-slate-900 text-right text-lg" }, "AVALIA\u00C7\u00C3O GERAL"),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR5_DATA[0].status2026) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR5_DATA[0].status2026)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR5_DATA[0].status2027) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR5_DATA[0].status2027)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR5_DATA[0].status2028) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR5_DATA[0].status2028)))))))))));
+};
+/* ===== components/Indicator6.tsx ===== */
+const Indicator6_PercentBadge = ({ percent, threshold }) => {
+    const isRegular = percent >= threshold;
+    return (React.createElement("div", { className: `flex items-center justify-center font-bold px-3 py-1.5 rounded-md border text-base w-20 mx-auto ${isRegular
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` },
+        percent,
+        "%"));
+};
+const Indicator6 = () => {
+    const THRESHOLD = 75;
+    const getStatus = (percent) => percent >= THRESHOLD ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 6: Adimpl\u00EAncia Contratual (Estande no CBC & Clubes EXPO)")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("div", { className: "flex items-center gap-2" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-green-400" }),
+                            React.createElement("p", { className: "text-base font-medium" },
+                                "Regular \u2265 ",
+                                THRESHOLD,
+                                "%")),
+                        React.createElement("div", { className: "flex items-center gap-2 mt-1" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-red-400" }),
+                            React.createElement("p", { className: "text-base font-medium" },
+                                "Irregular < ",
+                                THRESHOLD,
+                                "%")))))),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "p-6 border-b border-slate-200" },
+                React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Pagamento de Parcelas"),
+                React.createElement("p", { className: "text-base text-slate-500" }, "Percentual de parcelas pagas dentro do prazo.")),
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[60%]" }, "A\u00E7\u00E3o / Metodologia"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2026"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2027"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2028"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR6_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "font-bold text-lg text-slate-900" }, item.action),
+                            React.createElement("div", { className: "text-base text-slate-500 mt-1 whitespace-pre-line" }, item.methodology),
+                            React.createElement("div", { className: "inline-block mt-2 px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-sm font-medium border border-slate-200" }, item.verification)),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator6_PercentBadge, { percent: item.percent2026, threshold: THRESHOLD })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator6_PercentBadge, { percent: item.percent2027, threshold: THRESHOLD })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator6_PercentBadge, { percent: item.percent2028, threshold: THRESHOLD })))))),
+                    React.createElement("tfoot", { className: "bg-slate-50 border-t border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-4 font-bold text-slate-900 text-right text-lg" }, "AVALIA\u00C7\u00C3O GERAL"),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR6_DATA[0].percent2026) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR6_DATA[0].percent2026)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR6_DATA[0].percent2027) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR6_DATA[0].percent2027)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR6_DATA[0].percent2028) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR6_DATA[0].percent2028)))))))))));
+};
+/* ===== components/Indicator7.tsx ===== */
+const Indicator7_PercentBadge = ({ percent, threshold }) => {
+    const isRegular = percent >= threshold;
+    return (React.createElement("div", { className: `flex items-center justify-center font-bold px-3 py-1.5 rounded-md border text-base w-20 mx-auto ${isRegular
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-700 border-red-200'}` },
+        percent,
+        "%"));
+};
+const Indicator7 = () => {
+    const THRESHOLD = 80;
+    const getStatus = (percent) => percent >= THRESHOLD ? ClubStatus.REGULAR : ClubStatus.IRREGULAR;
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden" },
+            React.createElement("div", { className: "p-6 md:p-8 flex flex-col md:flex-row justify-between gap-6" },
+                React.createElement("div", null,
+                    React.createElement("h2", { className: "text-blue-200 text-base font-semibold tracking-wide uppercase mb-1" }, "Formul\u00E1rio de Avalia\u00E7\u00E3o por Indicador"),
+                    React.createElement("h1", { className: "text-3xl md:text-4xl font-bold leading-tight" }, "INDICADOR 7: Adimpl\u00EAncia de Contribui\u00E7\u00E3o (Associativa junto ao CBC)")),
+                React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                    React.createElement("div", { className: "bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/20" },
+                        React.createElement("p", { className: "text-sm text-blue-200 uppercase mb-1" }, "Crit\u00E9rio de Aprova\u00E7\u00E3o"),
+                        React.createElement("div", { className: "flex items-center gap-2" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-green-400" }),
+                            React.createElement("p", { className: "text-base font-medium" },
+                                "Regular \u2265 ",
+                                THRESHOLD,
+                                "%")),
+                        React.createElement("div", { className: "flex items-center gap-2 mt-1" },
+                            React.createElement("span", { className: "w-2 h-2 rounded-full bg-red-400" }),
+                            React.createElement("p", { className: "text-base font-medium" },
+                                "Irregular < ",
+                                THRESHOLD,
+                                "%")))))),
+        React.createElement("div", { className: "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "p-6 border-b border-slate-200" },
+                React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Mensalidades em dia"),
+                React.createElement("p", { className: "text-base text-slate-500" }, "Percentual de mensalidades pagas em dia frente ao total de 12 meses.")),
+            React.createElement("div", { className: "overflow-x-auto" },
+                React.createElement("table", { className: "w-full text-base text-left text-slate-600" },
+                    React.createElement("thead", { className: "bg-slate-50 text-slate-700 text-sm uppercase font-bold tracking-wider border-b border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("th", { className: "px-6 py-4 w-[60%]" }, "A\u00E7\u00E3o / Metodologia"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2026"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2027"),
+                            React.createElement("th", { className: "px-2 py-4 text-center w-[13.3%]" }, "2028"))),
+                    React.createElement("tbody", { className: "divide-y divide-slate-100" }, INDICATOR7_DATA.map((item) => (React.createElement("tr", { key: item.id, className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-4" },
+                            React.createElement("div", { className: "font-bold text-lg text-slate-900" }, item.action),
+                            React.createElement("div", { className: "text-base text-slate-500 mt-1 whitespace-pre-line" }, item.methodology),
+                            React.createElement("div", { className: "inline-block mt-2 px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-sm font-medium border border-slate-200" }, item.verification)),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator7_PercentBadge, { percent: item.percent2026, threshold: THRESHOLD })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator7_PercentBadge, { percent: item.percent2027, threshold: THRESHOLD })),
+                        React.createElement("td", { className: "px-2 py-4" },
+                            React.createElement(Indicator7_PercentBadge, { percent: item.percent2028, threshold: THRESHOLD })))))),
+                    React.createElement("tfoot", { className: "bg-slate-50 border-t border-slate-200" },
+                        React.createElement("tr", null,
+                            React.createElement("td", { className: "px-6 py-4 font-bold text-slate-900 text-right text-lg" }, "AVALIA\u00C7\u00C3O GERAL"),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR7_DATA[0].percent2026) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR7_DATA[0].percent2026)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR7_DATA[0].percent2027) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR7_DATA[0].percent2027)))),
+                            React.createElement("td", { className: "px-2 py-4 text-center" },
+                                React.createElement("div", { className: "flex flex-col items-center" },
+                                    React.createElement("span", { className: `text-base uppercase font-bold px-3 py-1 rounded-full ${getStatus(INDICATOR7_DATA[0].percent2028) === ClubStatus.REGULAR ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}` }, getStatus(INDICATOR7_DATA[0].percent2028)))))))))));
+};
+/* ===== components/MarcosRD05.tsx ===== */
+const MarcosRD05 = () => {
+    const [activeTab, setActiveTab] = useState('consolidated');
+    const [expandedRows, setExpandedRows] = useState([]);
+    const toggleRow = (id) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]);
+    };
+    const calculateYearTotal = (row, year) => {
+        var _a;
+        return ((_a = row.data[year]) === null || _a === void 0 ? void 0 : _a.reduce((acc, p) => acc + p.count, 0)) || 0;
+    };
+    const calculateGrandTotal = (row) => {
+        return [2026, 2027, 2028].reduce((acc, y) => acc + calculateYearTotal(row, y), 0);
+    };
+    const renderConsolidated = () => (React.createElement("div", { className: "space-y-8" }, MARCOS_RD05A_DATA.map((cat, catIdx) => (React.createElement("div", { key: catIdx, className: "overflow-hidden border border-slate-200 rounded-lg" },
+        React.createElement("div", { className: "bg-slate-100 px-6 py-3 font-bold text-slate-800 border-b border-slate-200 uppercase tracking-wide" }, cat.title),
+        React.createElement("table", { className: "w-full text-left border-collapse" },
+            React.createElement("thead", { className: "bg-slate-50 text-slate-600 text-[10px] uppercase font-bold border-b border-slate-200" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-6 py-3 w-[70%] border-r border-slate-200" }, "Causas"),
+                    React.createElement("th", { className: "px-2 py-3 w-[7%] text-center border-r border-slate-200" }, "2026"),
+                    React.createElement("th", { className: "px-2 py-3 w-[7%] text-center border-r border-slate-200" }, "2027"),
+                    React.createElement("th", { className: "px-2 py-3 w-[7%] text-center border-r border-slate-200" }, "2028"),
+                    React.createElement("th", { className: "px-2 py-3 w-[9%] text-center bg-slate-100" }, "Total Ciclo"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-100 text-slate-700" }, cat.rows.map((row) => (React.createElement("tr", { key: row.id, className: "hover:bg-slate-50 transition-colors" },
+                React.createElement("td", { className: "px-6 py-3 border-r border-slate-200 text-sm font-medium" }, row.cause),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200 text-center font-bold" }, calculateYearTotal(row, 2026)),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200 text-center font-bold" }, calculateYearTotal(row, 2027)),
+                React.createElement("td", { className: "px-2 py-3 border-r border-slate-200 text-center font-bold" }, calculateYearTotal(row, 2028)),
+                React.createElement("td", { className: "px-2 py-3 text-center bg-slate-50 font-bold text-blue-800" }, calculateGrandTotal(row))))))))))));
+    const renderYearView = (year) => (React.createElement("div", { className: "space-y-8" }, MARCOS_RD05A_DATA.map((cat, catIdx) => (React.createElement("div", { key: catIdx, className: "overflow-hidden border border-slate-200 rounded-lg" },
+        React.createElement("div", { className: "bg-slate-100 px-6 py-3 font-bold text-slate-800 border-b border-slate-200 uppercase tracking-wide" }, cat.title),
+        React.createElement("table", { className: "w-full text-left border-collapse" },
+            React.createElement("thead", { className: "bg-slate-50 text-slate-600 text-[10px] uppercase font-bold border-b border-slate-200" },
+                React.createElement("tr", null,
+                    React.createElement("th", { className: "px-6 py-3 w-[80%] border-r border-slate-200" }, "Causas"),
+                    React.createElement("th", { className: "px-2 py-3 w-[10%] text-center border-r border-slate-200" }, "Ocorr\u00EAncias"),
+                    React.createElement("th", { className: "px-2 py-3 w-[10%] text-center bg-slate-100" }, "Detalhes"))),
+            React.createElement("tbody", { className: "divide-y divide-slate-100 text-slate-700" }, cat.rows.map((row) => {
+                const rowKey = `${row.id}-${year}`;
+                const isExpanded = expandedRows.includes(rowKey);
+                return (React.createElement(React.Fragment, { key: row.id },
+                    React.createElement("tr", { className: "hover:bg-slate-50 transition-colors" },
+                        React.createElement("td", { className: "px-6 py-3 border-r border-slate-200 text-sm font-medium" }, row.cause),
+                        React.createElement("td", { className: "px-2 py-3 border-r border-slate-200 text-center font-bold" }, calculateYearTotal(row, year)),
+                        React.createElement("td", { className: "px-2 py-3 text-center" },
+                            React.createElement("button", { onClick: () => toggleRow(rowKey), className: "text-blue-600 hover:text-blue-800 font-bold text-sm" }, isExpanded ? 'Ocultar' : 'Ver'))),
+                    isExpanded && (React.createElement("tr", { className: "bg-slate-50" },
+                        React.createElement("td", { colSpan: 3, className: "px-6 py-4" },
+                            React.createElement("div", { className: "grid grid-cols-12 gap-2 text-center" }, row.data[year].map((p, pIdx) => (React.createElement("div", { key: pIdx, className: "p-1 rounded bg-white border border-slate-200" },
+                                React.createElement("div", { className: "text-[8px] font-bold text-slate-400 uppercase" }, p.period),
+                                React.createElement("div", { className: "text-sm font-bold text-slate-800" }, p.count))))))))));
+            }))))))));
+    return (React.createElement("div", { className: "space-y-6" },
+        React.createElement("div", { className: "bg-[#1e3a8a] text-white shadow-lg rounded-xl overflow-hidden p-6 md:p-8" },
+            React.createElement("h1", { className: "text-3xl md:text-4xl font-bold" }, "Hist\u00F3rico Indicadores Operacionais"),
+            React.createElement("p", { className: "text-blue-200 text-lg" }, "Acompanhamento dos marcos de conformidade da RD05-A.")),
+        React.createElement("div", { className: "flex border-b border-slate-200 bg-white rounded-t-xl overflow-hidden shadow-sm" },
+            React.createElement("button", { onClick: () => setActiveTab('consolidated'), className: `flex-1 py-4 font-bold ${activeTab === 'consolidated' ? 'bg-blue-50 text-blue-800 border-b-4 border-blue-800' : 'text-slate-500'}` }, "Painel Consolidado"),
+            [2026, 2027, 2028].map(y => (React.createElement("button", { key: y, onClick: () => setActiveTab(y), className: `flex-1 py-4 font-bold ${activeTab === y ? 'bg-blue-50 text-blue-800 border-b-4 border-blue-800' : 'text-slate-500'}` }, y)))),
+        React.createElement("div", { className: "bg-white p-6 rounded-b-xl shadow-sm border border-slate-200" }, activeTab === 'consolidated' ? renderConsolidated() : renderYearView(activeTab))));
+};
+/* ===== components/ProjectInfo.tsx ===== */
+const ProjectInfo = () => {
+    return (React.createElement("div", { className: "bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden mb-6 mx-6 mt-4" },
+        React.createElement("div", { className: "bg-[#1e3a8a] px-4 py-3 flex items-center gap-2" },
+            React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "currentColor", className: "w-6 h-6 text-white" },
+                React.createElement("path", { d: "M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z" })),
+            React.createElement("span", { className: "text-white font-bold text-base tracking-wide" }, "Informa\u00E7\u00F5es do Projeto")),
+        React.createElement("div", { className: "p-5" },
+            React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-y-4 gap-x-6" },
+                React.createElement("div", { className: "lg:col-span-4" },
+                    React.createElement("span", { className: "block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" }, "Clube:"),
+                    React.createElement("span", { className: "font-bold text-slate-800 text-base block leading-tight" }, "ASSOCIA\u00C7\u00C3O ESPORTIVA SIDER\u00DARGICA DE TUBAR\u00C3O - AEST")),
+                React.createElement("div", { className: "lg:col-span-2" },
+                    React.createElement("span", { className: "block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" }, "CNPJ:"),
+                    React.createElement("span", { className: "font-bold text-slate-800 text-base" }, "27.457.746/0001-85")),
+                React.createElement("div", { className: "lg:col-span-3" },
+                    React.createElement("span", { className: "block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" }, "Categoria de Integra\u00E7\u00E3o:"),
+                    React.createElement("span", { className: "font-bold text-slate-800 text-base" }, "Filiado Pleno")),
+                React.createElement("div", { className: "lg:col-span-3" },
+                    React.createElement("span", { className: "block text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider" }, "Status de Categoria:"),
+                    React.createElement("span", { className: "font-bold text-slate-800 text-base" }, "Filiado Pleno"))))));
+};
+/* ===== components/SummaryChart.tsx ===== */
+const SummaryChart = () => {
+    return (React.createElement("div", { className: "bg-white p-6 rounded-xl shadow-sm border border-slate-200" },
+        React.createElement("div", { className: "mb-6" },
+            React.createElement("h3", { className: "text-xl font-bold text-slate-800" }, "Evolu\u00E7\u00E3o do Status das Certid\u00F5es (2026-2028)"),
+            React.createElement("p", { className: "text-base text-slate-500" }, "Quantidade de certid\u00F5es validadas vs. n\u00E3o validadas por ano.")),
+        React.createElement("div", { className: "h-[350px] w-full" },
+            React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
+                React.createElement(BarChart, { data: YEAR_SUMMARIES, margin: {
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                    } },
+                    React.createElement(CartesianGrid, { strokeDasharray: "3 3", vertical: false, stroke: "#e2e8f0" }),
+                    React.createElement(XAxis, { dataKey: "year", tick: { fill: '#475569', fontSize: 16, fontWeight: 600 }, axisLine: false, tickLine: false }),
+                    React.createElement(YAxis, { hide: true }),
+                    React.createElement(Tooltip, { cursor: { fill: '#f1f5f9' }, contentStyle: { borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '14px' } }),
+                    React.createElement(Legend, { wrapperStyle: { paddingTop: '20px', fontSize: '14px' } }),
+                    React.createElement(Bar, { dataKey: "validado", name: Status.VALIDADO, stackId: "a", fill: "#16a34a", radius: [0, 0, 4, 4], barSize: 60 }, YEAR_SUMMARIES.map((entry, index) => (React.createElement(Cell, { key: `cell-val-${index}`, fill: "#16a34a" })))),
+                    React.createElement(Bar, { dataKey: "naoValidado", name: Status.NAO_VALIDADO, stackId: "a", fill: "#dc2626", radius: [4, 4, 0, 0], barSize: 60 }, YEAR_SUMMARIES.map((entry, index) => (React.createElement(Cell, { key: `cell-nval-${index}`, fill: "#dc2626" }))))))),
+        React.createElement("div", { className: "mt-6 grid grid-cols-3 gap-4 border-t border-slate-100 pt-4 text-center" }, YEAR_SUMMARIES.map((y) => (React.createElement("div", { key: y.year, className: "flex flex-col items-center" },
+            React.createElement("span", { className: "text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1" },
+                "Status Final ",
+                y.year),
+            React.createElement("span", { className: `px-3 py-1 rounded-full text-base font-bold ${y.clubStatus === 'Regular'
+                    ? 'bg-green-100 text-green-700 border border-green-200'
+                    : 'bg-red-100 text-red-700 border border-red-200'}` }, y.clubStatus.toUpperCase())))))));
+};
+/* ===== App.tsx ===== */
+const App = () => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [expandedMenu, setExpandedMenu] = useState('clubes');
+    const [activeMenuItem, setActiveMenuItem] = useState('gestao-dados');
+    const toggleMenu = (menu) => {
+        setExpandedMenu(expandedMenu === menu ? null : menu);
+    };
+    return (React.createElement("div", { className: "flex h-screen bg-slate-50 font-sans overflow-hidden" },
+        React.createElement("aside", { className: `${isSidebarOpen ? 'w-72' : 'w-20'} bg-[#1e3a8a] text-white flex flex-col transition-all duration-300 shadow-xl z-50` },
+            React.createElement("div", { className: "h-16 flex items-center px-4 bg-[#172554] border-b border-blue-800" },
+                React.createElement("div", { className: `flex items-center gap-3 ${!isSidebarOpen && 'justify-center w-full'}` },
+                    React.createElement("div", { className: "w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#1e3a8a] font-bold shrink-0" },
+                        React.createElement("svg", { viewBox: "0 0 24 24", fill: "currentColor", className: "w-5 h-5" },
+                            React.createElement("path", { d: "M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" }))),
+                    isSidebarOpen && (React.createElement("div", { className: "flex flex-col" },
+                        React.createElement("span", { className: "font-bold text-xl leading-none" }, "CBC"),
+                        React.createElement("span", { className: "text-xs text-blue-200 tracking-wider" }, "COMIT\u00CA BRASILEIRO DE CLUBES"))))),
+            isSidebarOpen && (React.createElement("div", { className: "px-6 py-6" },
+                React.createElement("h2", { className: "text-2xl font-bold" }, "Comit\u00EA Digital"))),
+            React.createElement("nav", { className: "flex-1 overflow-y-auto py-2 custom-scrollbar" },
+                React.createElement("ul", { className: "space-y-1" },
+                    React.createElement("li", null,
+                        React.createElement("button", { className: "w-full flex items-center px-4 py-3 text-blue-100 hover:bg-blue-800 hover:text-white transition-colors" },
+                            React.createElement("svg", { className: "w-6 h-6 shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                                React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" })),
+                            isSidebarOpen && React.createElement("span", { className: "ml-3 text-base font-medium" }, "P\u00E1gina Inicial"))),
+                    React.createElement("li", null,
+                        React.createElement("button", { onClick: () => toggleMenu('clubes'), className: `w-full flex items-center justify-between px-4 py-3 text-blue-100 hover:bg-blue-800 hover:text-white transition-colors ${expandedMenu === 'clubes' ? 'bg-blue-800' : ''}` },
+                            React.createElement("div", { className: "flex items-center" },
+                                React.createElement("svg", { className: "w-6 h-6 shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                                    React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" })),
+                                isSidebarOpen && React.createElement("span", { className: "ml-3 text-base font-medium" }, "Clubes")),
+                            isSidebarOpen && (React.createElement("svg", { className: `w-4 h-4 transition-transform ${expandedMenu === 'clubes' ? 'rotate-180' : ''}`, fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                                React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M19 9l-7 7-7-7" })))),
+                        expandedMenu === 'clubes' && isSidebarOpen && (React.createElement("div", { className: "bg-[#172554] py-1" },
+                            React.createElement("button", { className: "w-full flex items-center pl-12 pr-4 py-2 text-base text-blue-200 hover:text-white hover:bg-blue-900 transition-colors" },
+                                React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-blue-400 mr-2" }),
+                                "CDC - Cadastro Geral"),
+                            React.createElement("button", { onClick: () => setActiveMenuItem('gestao-dados'), className: `w-full flex items-center pl-12 pr-4 py-2 text-base transition-colors ${activeMenuItem === 'gestao-dados'
+                                    ? 'text-white bg-blue-900 font-medium'
+                                    : 'text-blue-200 hover:text-white hover:bg-blue-900'}` },
+                                React.createElement("span", { className: `w-1.5 h-1.5 rounded-full mr-2 ${activeMenuItem === 'gestao-dados' ? 'bg-white' : 'bg-blue-400'}` }),
+                                "Gest\u00E3o de Dados")))),
+                    React.createElement("li", null,
+                        React.createElement("button", { className: "w-full flex items-center px-4 py-3 text-blue-100 hover:bg-blue-800 hover:text-white transition-colors opacity-70" },
+                            React.createElement("svg", { className: "w-6 h-6 shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                                React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" }),
+                                React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z" })),
+                            isSidebarOpen && React.createElement("span", { className: "ml-3 text-base font-medium" }, "Esportes"))),
+                    React.createElement("li", null,
+                        React.createElement("button", { className: "w-full flex items-center px-4 py-3 text-blue-100 hover:bg-blue-800 hover:text-white transition-colors opacity-70" },
+                            React.createElement("svg", { className: "w-6 h-6 shrink-0", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                                React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" })),
+                            isSidebarOpen && React.createElement("span", { className: "ml-3 text-base font-medium" }, "Competi\u00E7\u00F5es")))))),
+        React.createElement("div", { className: "flex-1 flex flex-col min-w-0" },
+            React.createElement("header", { className: "bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0 z-40" },
+                React.createElement("div", { className: "flex items-center gap-4" },
+                    React.createElement("button", { onClick: () => setIsSidebarOpen(!isSidebarOpen), className: "text-slate-500 hover:text-slate-700 focus:outline-none" },
+                        React.createElement("svg", { className: "w-6 h-6", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                            React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M4 6h16M4 12h16M4 18h16" }))),
+                    React.createElement("div", { className: "hidden md:flex items-center text-base text-slate-500" },
+                        React.createElement("span", null, "P\u00E1gina Inicial"),
+                        React.createElement("svg", { className: "w-4 h-4 mx-2 text-slate-400", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                            React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 5l7 7-7 7" })),
+                        React.createElement("span", null, "Clubes"),
+                        React.createElement("svg", { className: "w-4 h-4 mx-2 text-slate-400", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" },
+                            React.createElement("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 5l7 7-7 7" })),
+                        React.createElement("span", { className: "font-semibold text-slate-800" }, "Gest\u00E3o de Dados"))),
+                React.createElement("div", { className: "flex items-center gap-6" },
+                    React.createElement("div", { className: "hidden md:flex flex-col items-end" },
+                        React.createElement("span", { className: "text-base font-bold text-slate-700" }, "Carla Rosana de Paula"),
+                        React.createElement("span", { className: "text-sm text-slate-500" }, "Analista - Coord. Acompanhamento e PC")),
+                    React.createElement("div", { className: "h-9 w-9 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold border border-indigo-200 text-lg" }, "CR"))),
+            React.createElement("main", { className: "flex-1 overflow-auto bg-slate-100 relative" },
+                React.createElement("div", { className: "py-8" },
+                    React.createElement("div", { className: "px-6 mb-2" },
+                        React.createElement("h1", { className: "text-3xl font-bold text-slate-800" }, "CBC - Governan\u00E7a Institucional"),
+                        React.createElement("p", { className: "text-slate-500 text-base" }, "Gest\u00E3o e acompanhamento de indicadores de conformidade.")),
+                    activeMenuItem === 'gestao-dados' ? (React.createElement(React.Fragment, null,
+                        React.createElement(ProjectInfo, null),
+                        React.createElement(GovernanceDashboard, null))) : (React.createElement("div", { className: "flex items-center justify-center h-96 text-slate-400 text-lg" }, "Selecione \"Gest\u00E3o de Dados\" no menu lateral.")))))));
+};
+/* ===== index.tsx ===== */
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+    throw new Error("Could not find root element to mount to");
+}
+const root = createRoot(rootElement);
+root.render(React.createElement(React.StrictMode, null,
+    React.createElement(App, null)));
+
+  </script>
+
+  <script type="module">
+    const root = document.getElementById('root');
+
+    const showError = (err) => {
+      console.error(err);
+      if (!root) return;
+      const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
+      root.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f1f5f9;">
+          <div style="max-width:920px;width:100%;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 10px 20px rgba(0,0,0,.06);">
+            <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px;">Falha ao carregar o dashboard</div>
+            <div style="font-size:14px;color:#475569;margin-bottom:16px;">
+              Normalmente isso ocorre por bloqueio de CDN/extensão do navegador, ou falta de internet.
+            </div>
+            <div style="font-size:12px;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;white-space:pre-wrap;overflow:auto;max-height:50vh;">${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          </div>
+        </div>
+      `;
+    };
+
+    const tryImport = async (urls) => {
+      let lastErr = null;
+      for (const url of urls) {
+        try {
+          return await import(url);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error('Falha ao importar dependências');
+    };
+
+    (async () => {
+      try {
+        const ReactMod = await tryImport([
+          'https://aistudiocdn.com/react@^19.2.1',
+          'https://esm.sh/react@19.2.1'
+        ]);
+        const React = ReactMod.default ?? ReactMod;
+
+        const ReactDOMClientMod = await tryImport([
+          'https://aistudiocdn.com/react-dom@^19.2.1/client',
+          'https://esm.sh/react-dom@19.2.1/client'
+        ]);
+
+        const RechartsMod = await tryImport([
+          'https://aistudiocdn.com/recharts@^3.5.1',
+          'https://esm.sh/recharts@3.5.1'
+        ]);
+
+        window.React = React;
+        window.Recharts = RechartsMod;
+        window.createRoot = ReactDOMClientMod.createRoot;
+
+        const code = document.getElementById('app-bundle')?.textContent || '';
+        if (!code.trim()) throw new Error('Bundle JS não encontrado no index.html');
+
+        // Executa o bundle já compilado (sem TS/JSX), preservando layout e comportamento.
+        new Function(code)();
+      } catch (e) {
+        showError(e);
+      }
+    })();
+  </script>
+</body>
+</html>
